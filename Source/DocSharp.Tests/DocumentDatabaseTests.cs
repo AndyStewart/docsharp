@@ -10,7 +10,7 @@ namespace DocSharp.Tests
         [Test]
         public void Should_Create_document_db()
         {
-            var documentDb = new DocumentDatabase(DbName);
+            var documentDb = new DocSharp(DbName);
             Assert.IsTrue(File.Exists(DbName));
             documentDb .Dispose();
         }
@@ -18,11 +18,11 @@ namespace DocSharp.Tests
         [Test]
         public void Should_store_document()
         {
-            var documentDb = new DocumentDatabase(DbName);
-            var document = documentDb.Store<TestDocument>(new TestDocument() { Data = "Hello"});
+            var documentDb = new DocSharp(DbName);
+            var document = documentDb.Store(new TestDocument() { Data = "Hello"});
             documentDb.Dispose();
 
-            var db2 = new DocumentDatabase(DbName);
+            var db2 = new DocSharp(DbName);
             var document2 = db2.Load<TestDocument>(document.Id);
             db2.Dispose();
 
@@ -32,13 +32,13 @@ namespace DocSharp.Tests
         [Test]
         public void Should_store_and_retrieve_multiple_documents()
         {
-            var documentDb = new DocumentDatabase(DbName);
-            var newDocument1 = documentDb.Store<TestDocument>(new TestDocument { Data = "Hello" });
-            var newDocument2 = documentDb.Store<TestDocument>(new TestDocument { Data = "Hello2" });
-            var newDocument3 = documentDb.Store<TestDocument>(new TestDocument { Data = "Hello3" });
+            var documentDb = new DocSharp(DbName);
+            var newDocument1 = documentDb.Store(new TestDocument { Data = "Hello" });
+            var newDocument2 = documentDb.Store(new TestDocument { Data = "Hello2" });
+            var newDocument3 = documentDb.Store(new TestDocument { Data = "Hello3" });
             documentDb.Dispose();
 
-            var db2 = new DocumentDatabase(DbName);
+            var db2 = new DocSharp(DbName);
             var storedDocument1 = db2.Load<TestDocument>(newDocument1.Id);
             Assert.AreEqual(storedDocument1.Data.Data, newDocument1.Data.Data);
 
@@ -50,10 +50,10 @@ namespace DocSharp.Tests
             db2.Dispose();
         }
 
-        [Test, Ignore] // 1000 =  14 secs
+        [Test, Ignore] // 1000 =  14 secs -- target records to han13,241,930
         public void Should_store_1million_document()
         {
-            using (var documentDb = new DocumentDatabase(DbName))
+            using (var documentDb = new DocSharp(DbName))
             {
                 var startTime = DateTime.Now;
                 for (int i = 0; i < 1000; i++)
