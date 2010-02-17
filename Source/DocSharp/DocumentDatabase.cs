@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Microsoft.Isam.Esent.Interop;
+using Newtonsoft.Json;
 
 namespace DocSharp
 {
@@ -79,6 +82,93 @@ namespace DocSharp
         public void Delete()
         {
             File.Delete(_pathToDatabase);
+        }
+
+        public Document<T> Store<T>(object document)
+        {
+            var newDocument = new Document<T>() {Id = Guid.NewGuid(), Data = (T) document };
+            using (var instance = new Instance("stocksample"))
+            {
+                instance.Parameters.CircularLog = true;
+                instance.Init();
+                // Create a disposable wrapper around the JET_SESID.
+                using (var session = new Session(instance))
+                {
+                    JET_DBID dbid;
+                    Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
+                    Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
+                    using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
+                    {
+                        using (var transaction = new Transaction(session))
+                        {
+
+                            IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
+                            var columnId = columnids["Id"];
+                            var columnData = columnids["data"];
+
+                            using (var update = new Update(session, table, JET_prep.Insert))
+                            {
+                                Api.SetColumn(session, table, columnId, newDocument.Id.ToString(), Encoding.Unicode);
+                                Api.SetColumn(session, table, columnData, Serialize(newDocument.Data), Encoding.Unicode);
+                                update.Save();
+                            }
+                            transaction.Commit(CommitTransactionGrbit.None);
+                        }
+                    }
+                }
+            }
+
+            return newDocument;
+        }
+
+        private string Serialize(object document)
+        {
+            var serializer = JsonSerializer.Create(new JsonSerializerSettings());
+            var data = new StringWriter();
+            serializer.Serialize(data, document);
+            return data.ToString();
+        }
+
+        public Document<T> Load<T>(Guid guid)
+        {
+            using (var instance = new Instance("stocksample"))
+            {
+                instance.Parameters.CircularLog = true;
+                instance.Init();
+                // Create a disposable wrapper around the JET_SESID.
+                using (var session = new Session(instance))
+                {
+                    JET_DBID dbid;
+                    Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
+                    Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
+                    using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
+                    {
+                        using (var transaction = new Transaction(session))
+                        {
+                            IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
+                            var columnId = columnids["Id"];
+                            var columnData = columnids["data"];
+
+                            Api.JetSetCurrentIndex(session, table, null);
+                            Api.MakeKey(session, table, guid.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
+                            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+
+                            var documentFound = new Document<T>();
+                            documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
+                            documentFound.Data= DeSerialize<T>(Api.RetrieveColumnAsString(session, table, columnData));
+                            
+                            return documentFound;
+                        }
+                    }
+                }
+            }
+        }
+
+        private T DeSerialize<T>(string data)
+        {
+            var serializer = JsonSerializer.Create(new JsonSerializerSettings());
+            var dataReader = new StringReader(data);
+            return (T)serializer.Deserialize(dataReader, typeof(T));
         }
     }
 }
