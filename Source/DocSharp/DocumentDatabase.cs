@@ -7,13 +7,18 @@ using Newtonsoft.Json;
 
 namespace DocSharp
 {
-    public class DocumentDatabase
+    public class DocumentDatabase : IDisposable
     {
         private readonly string _pathToDatabase;
+        private readonly Instance instance;
 
         public DocumentDatabase(string pathToDatabase)
         {
             _pathToDatabase = pathToDatabase;
+
+            instance = new Instance(pathToDatabase);
+            instance.Parameters.CircularLog = true;
+            instance.Init();
 
             if (!File.Exists(_pathToDatabase))
                 createDatabase();
@@ -21,34 +26,30 @@ namespace DocSharp
 
         private void createDatabase()
         {
-            using (var instance = new Instance("createdatabase"))
+            using (var session = new Session(instance))
             {
-                instance.Init();
-                using (var session = new Session(instance))
+                JET_DBID dbid;
+                Api.JetCreateDatabase(session, _pathToDatabase, null, out dbid, CreateDatabaseGrbit.None);
+                using (var transaction = new Transaction(session))
                 {
-                    JET_DBID dbid;
-                    Api.JetCreateDatabase(session, _pathToDatabase, null, out dbid, CreateDatabaseGrbit.OverwriteExisting);
-                    using (var transaction = new Transaction(session))
-                    {
-                        // A newly created table is opened exclusively. This is necessary to add
-                        // a primary index to the table (a primary index can only be added if the table
-                        // is empty and opened exclusively). Columns and indexes can be added to a 
-                        // table which is opened normally.
-                        JET_TABLEID tableid;
-                        Api.JetCreateTable(session, dbid, "Documents", 16, 100, out tableid);
-                        CreateDocumentsTable(session, tableid);
-                        Api.JetCloseTable(session, tableid);
+                    // A newly created table is opened exclusively. This is necessary to add
+                    // a primary index to the table (a primary index can only be added if the table
+                    // is empty and opened exclusively). Columns and indexes can be added to a 
+                    // table which is opened normally.
+                    JET_TABLEID tableid;
+                    Api.JetCreateTable(session, dbid, "Documents", 16, 100, out tableid);
+                    CreateDocumentsTable(session, tableid);
+                    Api.JetCloseTable(session, tableid);
 
-                        // Lazily commit the transaction. Normally committing a transaction forces the
-                        // associated log records to be flushed to disk, so the commit has to wait for
-                        // the I/O to complete. Using the LazyFlush option means that the log records
-                        // are kept in memory and will be flushed later. This will preserve transaction
-                        // atomicity (all operations in the transaction will either happen or be rolled
-                        // back) but will not preserve durability (a crash after the commit call may
-                        // result in the transaction updates being lost). Lazy transaction commits are
-                        // considerably faster though, as they don't have to wait for an I/O.
-                        transaction.Commit(CommitTransactionGrbit.LazyFlush);
-                    }
+                    // Lazily commit the transaction. Normally committing a transaction forces the
+                    // associated log records to be flushed to disk, so the commit has to wait for
+                    // the I/O to complete. Using the LazyFlush option means that the log records
+                    // are kept in memory and will be flushed later. This will preserve transaction
+                    // atomicity (all operations in the transaction will either happen or be rolled
+                    // back) but will not preserve durability (a crash after the commit call may
+                    // result in the transaction updates being lost). Lazy transaction commits are
+                    // considerably faster though, as they don't have to wait for an I/O.
+                    transaction.Commit(CommitTransactionGrbit.LazyFlush);
                 }
             }
         }
@@ -87,33 +88,28 @@ namespace DocSharp
         public Document<T> Store<T>(object document)
         {
             var newDocument = new Document<T>() {Id = Guid.NewGuid(), Data = (T) document };
-            using (var instance = new Instance("stocksample"))
+            // Create a disposable wrapper around the JET_SESID.
+            using (var session = new Session(instance))
             {
-                instance.Parameters.CircularLog = true;
-                instance.Init();
-                // Create a disposable wrapper around the JET_SESID.
-                using (var session = new Session(instance))
+                JET_DBID dbid;
+                Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
+                Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
+                using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
                 {
-                    JET_DBID dbid;
-                    Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
-                    Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
-                    using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
+                    using (var transaction = new Transaction(session))
                     {
-                        using (var transaction = new Transaction(session))
+
+                        IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
+                        var columnId = columnids["Id"];
+                        var columnData = columnids["data"];
+
+                        using (var update = new Update(session, table, JET_prep.Insert))
                         {
-
-                            IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
-                            var columnId = columnids["Id"];
-                            var columnData = columnids["data"];
-
-                            using (var update = new Update(session, table, JET_prep.Insert))
-                            {
-                                Api.SetColumn(session, table, columnId, newDocument.Id.ToString(), Encoding.Unicode);
-                                Api.SetColumn(session, table, columnData, Serialize(newDocument.Data), Encoding.Unicode);
-                                update.Save();
-                            }
-                            transaction.Commit(CommitTransactionGrbit.None);
+                            Api.SetColumn(session, table, columnId, newDocument.Id.ToString(), Encoding.Unicode);
+                            Api.SetColumn(session, table, columnData, Serialize(newDocument.Data), Encoding.Unicode);
+                            update.Save();
                         }
+                        transaction.Commit(CommitTransactionGrbit.None);
                     }
                 }
             }
@@ -131,34 +127,29 @@ namespace DocSharp
 
         public Document<T> Load<T>(Guid guid)
         {
-            using (var instance = new Instance("stocksample"))
+            // Create a disposable wrapper around the JET_SESID.
+            using (var session = new Session(instance))
             {
-                instance.Parameters.CircularLog = true;
-                instance.Init();
-                // Create a disposable wrapper around the JET_SESID.
-                using (var session = new Session(instance))
+                JET_DBID dbid;
+                Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
+                Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
+                using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
                 {
-                    JET_DBID dbid;
-                    Api.JetAttachDatabase(session, _pathToDatabase, AttachDatabaseGrbit.None);
-                    Api.JetOpenDatabase(session, _pathToDatabase, null, out dbid, OpenDatabaseGrbit.None);
-                    using (var table = new Table(session, dbid, "Documents", OpenTableGrbit.None))
+                    using (var transaction = new Transaction(session))
                     {
-                        using (var transaction = new Transaction(session))
-                        {
-                            IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
-                            var columnId = columnids["Id"];
-                            var columnData = columnids["data"];
+                        IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
+                        var columnId = columnids["Id"];
+                        var columnData = columnids["data"];
 
-                            Api.JetSetCurrentIndex(session, table, null);
-                            Api.MakeKey(session, table, guid.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
-                            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+                        Api.JetSetCurrentIndex(session, table, null);
+                        Api.MakeKey(session, table, guid.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
+                        Api.JetSeek(session, table, SeekGrbit.SeekEQ);
 
-                            var documentFound = new Document<T>();
-                            documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
-                            documentFound.Data= DeSerialize<T>(Api.RetrieveColumnAsString(session, table, columnData));
-                            
-                            return documentFound;
-                        }
+                        var documentFound = new Document<T>();
+                        documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
+                        documentFound.Data= DeSerialize<T>(Api.RetrieveColumnAsString(session, table, columnData));
+                        
+                        return documentFound;
                     }
                 }
             }
@@ -169,6 +160,12 @@ namespace DocSharp
             var serializer = JsonSerializer.Create(new JsonSerializerSettings());
             var dataReader = new StringReader(data);
             return (T)serializer.Deserialize(dataReader, typeof(T));
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Api.JetTerm2(instance, TermGrbit.Abrupt);
         }
     }
 }
