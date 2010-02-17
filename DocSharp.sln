@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocSharp", "Source\DocSharp\DocSharp.csproj", "{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocSharp.Tests", "Source\DocSharp.Tests\DocSharp.Tests.csproj", "{96FB02BF-0E75-43A0-8637-E214D67F08EB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96FB02BF-0E75-43A0-8637-E214D67F08EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96FB02BF-0E75-43A0-8637-E214D67F08EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96FB02BF-0E75-43A0-8637-E214D67F08EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96FB02BF-0E75-43A0-8637-E214D67F08EB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
