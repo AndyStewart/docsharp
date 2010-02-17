@@ -56,12 +56,25 @@ namespace DocSharp
         {
             Api.JetSetCurrentIndex(session, table, null);
             Api.MakeKey(session, table, guid.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
-            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
 
-            var documentFound = new Document<T>();
-            documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
-            documentFound.Data = ObjectConverter.ToObject<T>(Api.RetrieveColumnAsString(session, table, columnData));
-            return documentFound;
+            if (Api.TrySeek(session, table, SeekGrbit.SeekEQ))
+            {
+                //Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+
+                var documentFound = new Document<T>();
+                documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
+                documentFound.Data = ObjectConverter.ToObject<T>(Api.RetrieveColumnAsString(session, table, columnData));
+                return documentFound;
+            }
+            return null;
+        }
+
+        public void Delete(Guid guid)
+        {
+            Api.JetSetCurrentIndex(session, table, null);
+            Api.MakeKey(session, table, guid.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            Api.JetDelete(session, table);
         }
     }
 }

@@ -30,6 +30,21 @@ namespace DocSharp.Tests
         }
 
         [Test]
+        public void Should_delete_document()
+        {
+            var documentDb = new DocSharp(DbName);
+            var document = documentDb.Store(new TestDocument() { Data = "Hello" });
+            documentDb.Delete(document.Id);
+            documentDb.Dispose();
+
+
+            var documentDb2 = new DocSharp(DbName);
+            var foundDocument = documentDb2.Load<TestDocument>(document.Id);
+            Assert.IsNull(foundDocument);
+        }
+
+
+        [Test]
         public void Should_store_and_retrieve_multiple_documents()
         {
             var documentDb = new DocSharp(DbName);
@@ -51,14 +66,14 @@ namespace DocSharp.Tests
         }
 
         [Test, Ignore] // 1000 =  14 secs -- target records to han13,241,930
-        public void Should_store_1million_document()
+        public void Should_store_1000_document()
         {
             using (var documentDb = new DocSharp(DbName))
             {
                 var startTime = DateTime.Now;
                 for (int i = 0; i < 1000; i++)
                 {
-                    var document = documentDb.Store<TestDocument>(new TestDocument() { Data = "Hello" });
+                    documentDb.Store(new TestDocument() { Data = "Hello" });
                 }
                 Console.WriteLine(DateTime.Now.Subtract(startTime).ToString());
             }

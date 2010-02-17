@@ -33,5 +33,13 @@ namespace DocSharp
                 return session.Load<T>(id);
             }
         }
+
+        public void Delete(Guid id)
+        {
+            using (var session = storageEngine.CreateSession())
+            {
+                session.Delete(id);
+            }
+        }
     }
 }
