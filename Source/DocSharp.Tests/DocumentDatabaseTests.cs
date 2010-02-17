@@ -13,5 +13,11 @@ namespace DocSharp.Tests
             var documentDb = new DocumentDatabase("DocDb.esb");
             Assert.IsTrue(File.Exists("DocDb.esb"));
         }
+        
+        [Test]
+        public void Should_store_document()
+        {
+            var db
+        }
     }
 }

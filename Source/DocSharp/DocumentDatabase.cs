@@ -32,9 +32,9 @@ namespace DocSharp
                         // is empty and opened exclusively). Columns and indexes can be added to a 
                         // table which is opened normally.
                         JET_TABLEID tableid;
-//                        Api.JetCreateTable(session, dbid, TableName, 16, 100, out tableid);
-//                        CreateColumnsAndIndexes(session, tableid);
-//                        Api.JetCloseTable(session, tableid);
+                        Api.JetCreateTable(session, dbid, "Documents", 16, 100, out tableid);
+                        CreateDocumentsTable(session, tableid);
+                        Api.JetCloseTable(session, tableid);
 
                         // Lazily commit the transaction. Normally committing a transaction forces the
                         // associated log records to be flushed to disk, so the commit has to wait for
@@ -49,6 +49,32 @@ namespace DocSharp
                 }
             }
         }
+
+        private void CreateDocumentsTable(Session session, JET_TABLEID tableid)
+        {
+            JET_COLUMNID columnid;
+
+            var guidColumn = new JET_COLUMNDEF
+                                {
+                                    cbMax = 255,
+                                    coltyp = JET_coltyp.Text,
+                                    cp = JET_CP.Unicode,
+                                    grbit = ColumndefGrbit.ColumnTagged
+                                };
+            Api.JetAddColumn(session, tableid, "id", guidColumn, null, 0, out columnid);
+
+            var textColumn = new JET_COLUMNDEF
+                                {
+                                    coltyp = JET_coltyp.LongText,
+                                    grbit = ColumndefGrbit.ColumnTagged
+                                };
+            Api.JetAddColumn(session, tableid, "data", textColumn, null, 0, out columnid);
+
+            const string indexDef = "+id\0\0";
+            Api.JetCreateIndex(session, tableid, "by_id", CreateIndexGrbit.IndexPrimary, indexDef, indexDef.Length,
+                               100);
+        }
+
 
         public void Delete()
         {
