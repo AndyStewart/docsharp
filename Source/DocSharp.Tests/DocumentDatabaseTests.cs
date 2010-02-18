@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq.Expressions;
 using NUnit.Framework;
 
 namespace DocSharp.Tests
@@ -101,6 +102,115 @@ namespace DocSharp.Tests
             }
         }
 
+
+        [Test]
+        public void Test_speed_of_query()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                var startTime = DateTime.Now;
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello" });
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument2 { Data = "Hello" });
+                }
+
+                documentDb.Store(new TestDocument { Data = "Hello World" });
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument2 { Data = "Hello" });
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello" });
+                }
+                Console.WriteLine(DateTime.Now.Subtract(startTime).ToString());
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                var startTime = DateTime.Now;
+                var documentsFound = documentDb.Query<TestDocument>(q => q.Data.Contains("World"));
+                var timeQueryTaken = DateTime.Now.Subtract(startTime);
+                Console.WriteLine("Query Time - " + DateTime.Now.Subtract(startTime));
+                Assert.AreEqual(1, documentsFound.Count);
+                Assert.IsTrue(timeQueryTaken.TotalSeconds <= 2);
+            }
+        }
+
+        [Test]
+        public void Test_Speed_of_look_up_by_id()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                for (int i = 0; i < 5000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello" });
+                }
+
+                var document = documentDb.Store(new TestDocument2 { Data = "Hello 1" });
+
+                for (int i = 0; i < 5000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello World" });
+                }
+
+                var startTime = DateTime.Now;
+                var documentsFound = documentDb.Load<TestDocument2>(document.Id);
+                var timeQueryTaken = DateTime.Now.Subtract(startTime);
+                Console.WriteLine("Load by Id Time - " + DateTime.Now.Subtract(startTime));
+                Assert.AreEqual(documentsFound.Data.Data, "Hello 1");
+                Assert.IsTrue(timeQueryTaken.TotalMilliseconds <= 500);
+            }
+        }
+
+        [Test]
+        public void Test_speed_of_query_with_index()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Index<TestDocument>(q => q.Data);
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello" });
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument2 { Data = "Hello" });
+                }
+
+                for (int i = 0; i < 500; i++)
+                {
+                    documentDb.Store(new TestDocument {Data = "Hello World"});
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument2 { Data = "Hello" });
+                }
+
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new TestDocument { Data = "Hello" });
+                }
+
+                var startTime = DateTime.Now;
+                var documentsFound = documentDb.Query<TestDocument>(q => q.Data.Contains("World"));
+                var timeQueryTaken = DateTime.Now.Subtract(startTime);
+                Console.WriteLine("Query Time - " + DateTime.Now.Subtract(startTime).TotalMilliseconds);
+                Assert.AreEqual(50, documentsFound.Count);
+                Assert.IsTrue(timeQueryTaken.TotalSeconds <= 2);
+            }
+        }
+
         [Test] // 1000 =  14 secs -- target records to han13,241,930
         public void Should_store_1000_document()
         {
@@ -118,6 +228,7 @@ namespace DocSharp.Tests
 
     public class TestDocument
     {
+        public int Total { get; set; }
         public string Data { get; set; }
     }
 

@@ -43,6 +43,9 @@ namespace DocSharp
             };
             Api.JetAddColumn(session, tableid, "collection_name", collectionColumn, null, 0, out columnid);
 
+            const string colectionIndexDef = "+collection_name\0\0";
+            Api.JetCreateIndex(session, tableid, "by_collection_name", CreateIndexGrbit.None, colectionIndexDef, colectionIndexDef.Length, 100);
+
             var textColumn = new JET_COLUMNDEF
                                  {
                                      coltyp = JET_coltyp.LongText,
@@ -50,8 +53,8 @@ namespace DocSharp
                                  };
             Api.JetAddColumn(session, tableid, "data", textColumn, null, 0, out columnid);
 
-            const string indexDef = "+id\0\0";
-            Api.JetCreateIndex(session, tableid, "by_id", CreateIndexGrbit.IndexPrimary, indexDef, indexDef.Length, 100);
+            const string idIndexDef = "+id\0\0";
+            Api.JetCreateIndex(session, tableid, "by_id", CreateIndexGrbit.IndexPrimary, idIndexDef, idIndexDef.Length, 100);
         }
     }
 }

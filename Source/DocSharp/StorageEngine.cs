@@ -29,7 +29,8 @@ namespace DocSharp
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Api.JetTerm2(instance, TermGrbit.Abrupt);
+            instance.Close();
+            instance.Dispose();
         }
 
         public StorageSession CreateSession()

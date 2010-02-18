@@ -1,5 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace DocSharp
 {
@@ -19,10 +23,17 @@ namespace DocSharp
 
         public Document<T> Store<T>(T value)
         {
-            var document = new Document<T>() { Id = Guid.NewGuid(), Data = value };
+            var document = new Document<T> { Id = Guid.NewGuid(), Data = value };
             using (var session = storageEngine.CreateSession())
             {
                 session.Insert(document);
+
+                var indexFound = indexes.FirstOrDefault(q => q.AppliesTo(typeof(T)));
+                if (indexFound != null)
+                {
+                    var index = indexFound;
+                    index.Add(document.Id, value);
+                }
             }
             return document;
         }
@@ -51,12 +62,95 @@ namespace DocSharp
             }
         }
 
-        public IList<Document<T>> Query<T>(Func<T, bool> whereClause)
+        public IList<Document<T>> Query<T>(Expression<Func<T, bool>> whereClause)
         {
             using (var session = storageEngine.CreateSession())
             {
-                return session.Query<T>(whereClause);
+                var indexFound = indexes.FirstOrDefault(q => q.AppliesTo(typeof(T)));
+                if (indexFound != null)
+                    return findByIndex((Index) indexFound, whereClause);
+
+                return session.Query(whereClause.Compile());
             }
+        }
+
+        private IList<Document<T>> findByIndex<T>(Index index, Expression<Func<T, bool>> clause)
+        {
+            var documentsFound = new List<Document<T>>();
+
+            var methodExpression = (MethodCallExpression)clause.Body;
+            foreach (var list in index.Find(methodExpression))
+                documentsFound.Add(Load<T>(list));
+
+
+            return documentsFound;
+        }
+
+        private IList<Index> indexes = new List<Index>();
+        public void Index<T>(Expression<Func<T, object>> columnToIndex)
+        {
+            var index = new Index(typeof(T));
+            index.Rule(GetProperty(columnToIndex));
+            indexes.Add(index);
+        }
+
+        public virtual PropertyInfo GetProperty<T>(Expression<Func<T, object>> expression)
+        {
+            var memberExpression = getMemberExpression(expression);
+            return (PropertyInfo) memberExpression.Member;
+        }
+
+        private MemberExpression getMemberExpression<TModel, T1>(Expression<Func<TModel, T1>> expression)
+        {
+            MemberExpression memberExpression = null;
+            if (expression.Body.NodeType == ExpressionType.Convert)
+            {
+                var body = (UnaryExpression) expression.Body;
+                memberExpression = body.Operand as MemberExpression;
+            }
+            else if (expression.Body.NodeType == ExpressionType.MemberAccess) memberExpression = expression.Body as MemberExpression;
+
+            if (memberExpression == null) throw new ArgumentException("Not a member access", "member");
+            return memberExpression;
+        }
+    }
+
+    public class Index
+    {
+        private readonly Type _type;
+
+        public Index(Type type)
+        {
+            _type = type;
+        }
+
+        Dictionary<Guid, object> indexItems = new Dictionary<Guid, object>();
+        private PropertyInfo propertyInfo;
+
+        public bool AppliesTo(Type type)
+        {
+            return type == _type;
+        }
+
+        public void Add(Guid guid, object value)
+        {
+            indexItems.Add(guid, propertyInfo.GetValue(value, null));
+        }
+
+        public void Rule(PropertyInfo propertyInfo)
+        {
+            this.propertyInfo = propertyInfo;
+        }
+
+        public IEnumerable<Guid> Find(MethodCallExpression value)
+        {
+            return indexItems.Where(q => Find1(value, q)).Select(q => q.Key);
+        }
+
+        private bool Find1(MethodCallExpression value, KeyValuePair<Guid, object> q)
+        {
+            var a = (bool) value.Method.Invoke(q.Value, value.Arguments.Cast<ConstantExpression>().Select(c => c.Value).ToArray());
+            return a;
         }
     }
 }
