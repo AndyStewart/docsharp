@@ -41,5 +41,13 @@ namespace DocSharp
                 session.Delete(id);
             }
         }
+
+        public void Update<T>(Document<T> document)
+        {
+            using (var session = storageEngine.CreateSession())
+            {
+                session.Update(document);
+            }
+        }
     }
 }

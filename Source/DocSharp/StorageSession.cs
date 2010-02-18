@@ -76,5 +76,18 @@ namespace DocSharp
             Api.JetSeek(session, table, SeekGrbit.SeekEQ);
             Api.JetDelete(session, table);
         }
+
+        public void Update<T>(Document<T> document)
+        {
+            Api.JetSetCurrentIndex(session, table, null);
+            Api.MakeKey(session, table, document.Id.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            using (var update = new Update(session, table, JET_prep.Replace))
+            {
+                Api.SetColumn(session, table, columnId, document.Id.ToString(), Encoding.Unicode);
+                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(document.Data), Encoding.Unicode);
+                update.Save();
+            }
+        }
     }
 }

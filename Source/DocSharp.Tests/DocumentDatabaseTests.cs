@@ -38,9 +38,28 @@ namespace DocSharp.Tests
             documentDb.Dispose();
 
 
-            var documentDb2 = new DocSharp(DbName);
-            var foundDocument = documentDb2.Load<TestDocument>(document.Id);
-            Assert.IsNull(foundDocument);
+            using (var documentDb2 = new DocSharp(DbName))
+            {
+                var foundDocument = documentDb2.Load<TestDocument>(document.Id);
+                Assert.IsNull(foundDocument);
+            }
+        }
+
+        [Test]
+        public void Should_update_an_existing_document()
+        {
+            var documentDb = new DocSharp(DbName);
+            var document = documentDb.Store(new TestDocument() { Data = "Hello" });
+            document.Data.Data = "Updated";
+            documentDb.Update(document);
+            documentDb.Dispose();
+
+
+            using(var documentDb2 = new DocSharp(DbName))
+            {
+                var foundDocument = documentDb2.Load<TestDocument>(document.Id);
+                Assert.AreEqual(foundDocument.Data.Data, "Updated");
+            }
         }
 
 
@@ -65,7 +84,7 @@ namespace DocSharp.Tests
             db2.Dispose();
         }
 
-        [Test, Ignore] // 1000 =  14 secs -- target records to han13,241,930
+        [Test] // 1000 =  14 secs -- target records to han13,241,930
         public void Should_store_1000_document()
         {
             using (var documentDb = new DocSharp(DbName))
