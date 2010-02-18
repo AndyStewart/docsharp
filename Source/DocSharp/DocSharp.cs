@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DocSharp
 {
@@ -47,6 +48,14 @@ namespace DocSharp
             using (var session = storageEngine.CreateSession())
             {
                 session.Update(document);
+            }
+        }
+
+        public IList<Document<T>> Query<T>(Func<T, bool> whereClause)
+        {
+            using (var session = storageEngine.CreateSession())
+            {
+                return session.Query<T>(whereClause);
             }
         }
     }

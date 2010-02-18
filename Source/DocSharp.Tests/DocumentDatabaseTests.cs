@@ -62,7 +62,6 @@ namespace DocSharp.Tests
             }
         }
 
-
         [Test]
         public void Should_store_and_retrieve_multiple_documents()
         {
@@ -84,6 +83,24 @@ namespace DocSharp.Tests
             db2.Dispose();
         }
 
+        [Test]
+        public void Should_query_for_object()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new TestDocument {Data = "Test Document 1"});
+                documentDb.Store(new TestDocument {Data = "Hello World"});
+                documentDb.Store(new TestDocument {Data = "Test Document 3"});
+                documentDb.Store(new TestDocument2 { Data = "A Different Type of document containing Hello" });
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                var documentsFound = documentDb.Query<TestDocument>(q => q.Data.Contains("Hello"));
+                Assert.AreEqual(1, documentsFound.Count);
+            }
+        }
+
         [Test] // 1000 =  14 secs -- target records to han13,241,930
         public void Should_store_1000_document()
         {
@@ -101,7 +118,12 @@ namespace DocSharp.Tests
 
     public class TestDocument
     {
-        public Guid Id { get; set; }
         public string Data { get; set; }
     }
+
+    public class TestDocument2
+    {
+        public string Data { get; set; }
+    }
+
 }

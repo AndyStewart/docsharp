@@ -12,6 +12,7 @@ namespace DocSharp
         private Transaction transaction;
         private JET_COLUMNID columnId;
         private JET_COLUMNID columnData;
+        private JET_COLUMNID columnCollectionName;
 
         public StorageSession(Instance instance, string dbName)
         {
@@ -24,6 +25,7 @@ namespace DocSharp
 
             IDictionary<string, JET_COLUMNID> columnids = Api.GetColumnDictionary(session, table);
             columnId = columnids["Id"];
+            columnCollectionName = columnids["collection_name"];
             columnData = columnids["data"];
         }
 
@@ -47,6 +49,7 @@ namespace DocSharp
             using (var update = new Update(session, table, JET_prep.Insert))
             {
                 Api.SetColumn(session, table, columnId, document.Id.ToString(), Encoding.Unicode);
+                Api.SetColumn(session, table, columnCollectionName, getCollectionName<T>(), Encoding.Unicode);
                 Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(document.Data), Encoding.Unicode);
                 update.Save();
             }
@@ -59,14 +62,26 @@ namespace DocSharp
 
             if (Api.TrySeek(session, table, SeekGrbit.SeekEQ))
             {
-                //Api.JetSeek(session, table, SeekGrbit.SeekEQ);
-
-                var documentFound = new Document<T>();
-                documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
-                documentFound.Data = ObjectConverter.ToObject<T>(Api.RetrieveColumnAsString(session, table, columnData));
-                return documentFound;
+                return readDocument<T>();
             }
             return null;
+        }
+
+        private Document<T> readDocument<T>()
+        {
+            var typeName = Api.RetrieveColumnAsString(session, table, columnCollectionName);
+            if (getCollectionName<T>() != typeName)
+                return null;
+
+            var documentFound = new Document<T>();
+            documentFound.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
+            documentFound.Data = ObjectConverter.ToObject<T>(Api.RetrieveColumnAsString(session, table, columnData));
+            return documentFound;
+        }
+
+        private string getCollectionName<T>()
+        {
+            return typeof (T).Namespace + typeof (T).Name;
         }
 
         public void Delete(Guid guid)
@@ -88,6 +103,23 @@ namespace DocSharp
                 Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(document.Data), Encoding.Unicode);
                 update.Save();
             }
+        }
+
+        public IList<Document<T>> Query<T>(Func<T, bool> whereClause)
+        {
+            var listFound = new List<Document<T>>();
+            Api.JetSetCurrentIndex(session, table, null);
+            if (Api.TryMoveFirst(session, table))
+            {
+                do
+                {
+                    var documentFound = readDocument<T>();
+                    if (documentFound != null && whereClause.Invoke(documentFound.Data))
+                        listFound.Add(documentFound);
+                }
+                while (Api.TryMoveNext(session, table));
+            }
+            return listFound;
         }
     }
 }

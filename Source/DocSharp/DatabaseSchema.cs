@@ -34,6 +34,15 @@ namespace DocSharp
                                  };
             Api.JetAddColumn(session, tableid, "id", guidColumn, null, 0, out columnid);
 
+            var collectionColumn = new JET_COLUMNDEF
+            {
+                cbMax = 1000,
+                coltyp = JET_coltyp.Text,
+                cp = JET_CP.Unicode,
+                grbit = ColumndefGrbit.ColumnTagged
+            };
+            Api.JetAddColumn(session, tableid, "collection_name", collectionColumn, null, 0, out columnid);
+
             var textColumn = new JET_COLUMNDEF
                                  {
                                      coltyp = JET_coltyp.LongText,
