@@ -1,6 +1,6 @@
 using Microsoft.Isam.Esent.Interop;
 
-namespace DocSharp
+namespace DocSharp.Storage
 {
     public class DatabaseSchema
     {
@@ -35,12 +35,12 @@ namespace DocSharp
             Api.JetAddColumn(session, tableid, "id", guidColumn, null, 0, out columnid);
 
             var collectionColumn = new JET_COLUMNDEF
-            {
-                cbMax = 1000,
-                coltyp = JET_coltyp.Text,
-                cp = JET_CP.Unicode,
-                grbit = ColumndefGrbit.ColumnTagged
-            };
+                                       {
+                                           cbMax = 1000,
+                                           coltyp = JET_coltyp.Text,
+                                           cp = JET_CP.Unicode,
+                                           grbit = ColumndefGrbit.ColumnTagged
+                                       };
             Api.JetAddColumn(session, tableid, "collection_name", collectionColumn, null, 0, out columnid);
 
             const string colectionIndexDef = "+collection_name\0\0";

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using DocSharp.Storage;
 
 namespace DocSharp
 {
@@ -74,6 +75,15 @@ namespace DocSharp
             }
         }
 
+        public IQueryable<Document<T>> Query<T>()
+        {
+            
+            using (var session = storageEngine.CreateSession())
+            {
+                return new DocumentQuery<T>(session);
+            }
+        }
+
         private IList<Document<T>> findByIndex<T>(Index index, Expression<Func<T, bool>> clause)
         {
             var documentsFound = new List<Document<T>>();
@@ -115,42 +125,66 @@ namespace DocSharp
         }
     }
 
-    public class Index
+    public class DocumentQuery<T> : IQueryable<Document<T>>
     {
-        private readonly Type _type;
+        private DocumentQueryProvider provider;
+        private ConstantExpression expression;
 
-        public Index(Type type)
+        public DocumentQuery(DocumentQueryProvider queryProvider)
         {
-            _type = type;
+            provider = queryProvider;
+            expression = Expression.Constant(this);
         }
 
-        Dictionary<Guid, object> indexItems = new Dictionary<Guid, object>();
-        private PropertyInfo propertyInfo;
-
-        public bool AppliesTo(Type type)
+        public IEnumerator<Document<T>> GetEnumerator()
         {
-            return type == _type;
+            return ((IEnumerable<Document<T>>)provider.Execute(this.expression)).GetEnumerator();
         }
 
-        public void Add(Guid guid, object value)
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            indexItems.Add(guid, propertyInfo.GetValue(value, null));
+            return GetEnumerator();
         }
 
-        public void Rule(PropertyInfo propertyInfo)
+        public Expression Expression
         {
-            this.propertyInfo = propertyInfo;
+            get { return expression; }
         }
 
-        public IEnumerable<Guid> Find(MethodCallExpression value)
+        public Type ElementType
         {
-            return indexItems.Where(q => Find1(value, q)).Select(q => q.Key);
+            get { return typeof(T); }
         }
 
-        private bool Find1(MethodCallExpression value, KeyValuePair<Guid, object> q)
+        public IQueryProvider Provider
         {
-            var a = (bool) value.Method.Invoke(q.Value, value.Arguments.Cast<ConstantExpression>().Select(c => c.Value).ToArray());
-            return a;
+            get { return provider; }
+        }
+    }
+
+    public class DocumentQueryProvider : IQueryProvider
+    {
+        private Expression expression;
+
+        public IQueryable CreateQuery(Expression expression)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+        {
+            this.expression = expression;
+            return (IQueryable<TElement>) new DocumentQuery<Document<TElement>>(this);
+        }
+
+        public object Execute(Expression expression)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TResult Execute<TResult>(Expression expression)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Microsoft.Isam.Esent.Interop;
 
-namespace DocSharp
+namespace DocSharp.Storage
 {
     public class StorageEngine : IDisposable
     {

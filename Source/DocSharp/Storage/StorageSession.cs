@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
 
-namespace DocSharp
+namespace DocSharp.Storage
 {
     public class StorageSession : IDisposable
     {
@@ -34,7 +34,7 @@ namespace DocSharp
             if (transaction != null)
             {
                 //transaction.Commit(CommitTransactionGrbit.None); - Safe but slow
-                transaction.Commit(CommitTransactionGrbit.LazyFlush); // Used for insert performance, we'll mull this over
+                transaction.Commit(CommitTransactionGrbit.LazyFlush); // Used to increase performance, we'll mull this over
                 transaction.Dispose();
             }
 
