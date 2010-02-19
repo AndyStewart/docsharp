@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
@@ -45,13 +46,13 @@ namespace DocSharp.Storage
                 session.Dispose();
         }
 
-        public void Insert<T>(Document<T> document)
+        public void Insert<T>(Document<T> strongDocument)
         {
             using (var update = new Update(session, table, JET_prep.Insert))
             {
-                Api.SetColumn(session, table, columnId, document.Id.ToString(), Encoding.Unicode);
+                Api.SetColumn(session, table, columnId, strongDocument.Id.ToString(), Encoding.Unicode);
                 Api.SetColumn(session, table, columnCollectionName, getCollectionName<T>(), Encoding.Unicode);
-                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(document.Data), Encoding.Unicode);
+                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(strongDocument.Data), Encoding.Unicode);
                 update.Save();
             }
         }
@@ -80,6 +81,13 @@ namespace DocSharp.Storage
             return documentFound;
         }
 
+
+        private void populateDocument(Document strongDocument)
+        {
+            strongDocument.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
+            strongDocument.Data = ObjectConverter.ToObject(Api.RetrieveColumnAsString(session, table, columnData), strongDocument.Type);
+        }
+
         private string getCollectionName<T>()
         {
             return typeof (T).Namespace + typeof (T).Name;
@@ -93,15 +101,15 @@ namespace DocSharp.Storage
             Api.JetDelete(session, table);
         }
 
-        public void Update<T>(Document<T> document)
+        public void Update<T>(Document<T> strongDocument)
         {
             Api.JetSetCurrentIndex(session, table, null);
-            Api.MakeKey(session, table, document.Id.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.MakeKey(session, table, strongDocument.Id.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
             Api.JetSeek(session, table, SeekGrbit.SeekEQ);
             using (var update = new Update(session, table, JET_prep.Replace))
             {
-                Api.SetColumn(session, table, columnId, document.Id.ToString(), Encoding.Unicode);
-                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(document.Data), Encoding.Unicode);
+                Api.SetColumn(session, table, columnId, strongDocument.Id.ToString(), Encoding.Unicode);
+                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(strongDocument.Data), Encoding.Unicode);
                 update.Save();
             }
         }
@@ -119,6 +127,55 @@ namespace DocSharp.Storage
                     var documentFound = readDocument<T>();
                     if (documentFound != null && whereClause.Invoke(documentFound.Data))
                         listFound.Add(documentFound);
+                }
+                while (Api.TryMoveNext(session, table));
+            }
+            return listFound;
+        }
+
+        public List<Document> All(Type collectionType)
+        {
+            var listFound = new List<Document>();
+            Api.JetSetCurrentIndex(session, table, "by_collection_name");
+            var collectionName = collectionType.Namespace + collectionType.Name;
+            Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            if (Api.TryMoveFirst(session, table))
+            {
+                do
+                {
+                    var a = typeof (Document<>).MakeGenericType(collectionType);
+                    var newStrongDocument = (Document)Activator.CreateInstance(a);
+                    //newStrongDocument.Type = collectionType;
+                    populateDocument(newStrongDocument);
+                    listFound.Add(newStrongDocument);                    
+                }
+                while (Api.TryMoveNext(session, table));
+            }
+            return listFound;
+        }
+
+        // All of a certain Document Type
+        public IList All1(Type collectionType)
+        {
+            var documentType = collectionType;
+            var genericDocumentType = documentType.GetGenericArguments()[0];
+            var listFoundType = typeof(List<>).MakeGenericType(documentType);
+            var listFound = (IList)Activator.CreateInstance(listFoundType);
+
+            var collectionName = genericDocumentType.Namespace + genericDocumentType.Name;
+
+            Api.JetSetCurrentIndex(session, table, "by_collection_name");
+            Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            if (Api.TryMoveFirst(session, table))
+            {
+                do
+                {
+                    var a = typeof(Document<>).MakeGenericType(genericDocumentType);
+                    var newStrongDocument = (Document)Activator.CreateInstance(a);
+                    populateDocument(newStrongDocument);
+                    listFound.Add(newStrongDocument);
                 }
                 while (Api.TryMoveNext(session, table));
             }

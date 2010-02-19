@@ -15,6 +15,7 @@ namespace DocSharp.Storage
 
             instance = new Instance(pathToDatabase);
             instance.Parameters.CircularLog = true;
+            instance.Parameters.Recovery = true;
             instance.Init();
 
             if (!File.Exists(_pathToDatabase))

@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
     <Compile Include="DocSharpTests.cs" />
+    <Compile Include="DocumetQueryTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

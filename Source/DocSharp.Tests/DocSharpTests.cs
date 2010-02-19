@@ -210,19 +210,6 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test]
-        public void Implement_IQueryable()
-        {
-            using (var documentDb = new DocSharp(DbName))
-            {
-                var insertedDoc = documentDb.Store(new Company { Name = "Company Name "});
-                var query = documentDb.Query<Company>().Where(q => q.Data.Name.Contains("Name"));
-                var result = query.First();
-
-                Assert.AreEqual(insertedDoc.Id, result.Id);
-            }
-        }
-
         [Test, Ignore] // 1000 =  14 secs -- target records to han13,241,930
         public void Should_store_1000_document()
         {

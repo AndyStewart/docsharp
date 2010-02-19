@@ -58,7 +58,7 @@
     <Compile Include="Index.cs" />
     <Compile Include="Storage\DatabaseSchema.cs" />
     <Compile Include="DocSharp.cs" />
-    <Compile Include="Document.cs" />
+    <Compile Include="StrongDocument.cs" />
     <Compile Include="Storage\StorageEngine.cs" />
     <Compile Include="ObjectConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

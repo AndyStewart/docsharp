@@ -55,11 +55,11 @@ namespace DocSharp
             }
         }
 
-        public void Update<T>(Document<T> document)
+        public void Update<T>(Document<T> strongDocument)
         {
             using (var session = storageEngine.CreateSession())
             {
-                session.Update(document);
+                session.Update(strongDocument);
             }
         }
 
@@ -77,13 +77,9 @@ namespace DocSharp
 
         public IQueryable<Document<T>> Query<T>()
         {
-            
-            using (var session = storageEngine.CreateSession())
-            {
-
-                return new DocumentQuery<Document<T>>(new DocumentQueryProvider());
-            }
+            return new DocumentQuery<Document<T>>(new DocumentQueryProvider(storageEngine));
         }
+
 
         private IList<Document<T>> findByIndex<T>(Index index, Expression<Func<T, bool>> clause)
         {

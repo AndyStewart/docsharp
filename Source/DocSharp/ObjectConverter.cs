@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -26,5 +27,10 @@ namespace DocSharp
         }
 
 
+        public static object ToObject(string jsonData, Type type)
+        {
+            var dataReader = new StringReader(jsonData);
+            return serializer.Deserialize(dataReader, type);
+        }
     }
 }
