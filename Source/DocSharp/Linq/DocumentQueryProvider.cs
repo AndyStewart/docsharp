@@ -27,33 +27,16 @@ namespace DocSharp.Linq
 
         public object Execute(Expression expression)
         {
-            using (var session = _engine.CreateSession())
-            {
-                var type = expression.Type;
-                var collectionType = type.GetGenericArguments()[0].GetGenericArguments()[0];
-                var allObjects = session.All(collectionType);
-                return allObjects;
-            }
+            throw new NotImplementedException();
         }
-
-//        public TResult Execute<TResult>(Expression expression)
-//        {
-//            var result = ExecuteInternal(expression);
-//            if (typeof(TResult).IsAssignableFrom(typeof(Document)))
-//            {
-//                return (TResult)(object)((result.IsFirstCall) ? result.Documents.First() : result.Documents.FirstOrDefault());
-//            }
-//            return (TResult)result.Documents;
-//        }
 
         public TResult Execute<TResult>(Expression expression)
         {
             using (var session = _engine.CreateSession())
             {
-                var type = typeof (TResult).GetGenericArguments()[0];
-                var a = session.All1(type);
-                return (TResult) a;
-                return Activator.CreateInstance<TResult>();
+                var documentType = typeof (TResult).GetGenericArguments()[0];
+                var collectionType = documentType.GetGenericArguments()[0];
+                return (TResult)session.All(collectionType);
             } 
         }
     }

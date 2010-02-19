@@ -133,37 +133,17 @@ namespace DocSharp.Storage
             return listFound;
         }
 
-        public List<Document> All(Type collectionType)
+        /// <summary>
+        /// Return all documents of a certain type
+        /// </summary>
+        /// <param name="collectionType"></param>
+        /// <returns></returns>
+        public IList All(Type collectionType)
         {
-            var listFound = new List<Document>();
-            Api.JetSetCurrentIndex(session, table, "by_collection_name");
-            var collectionName = collectionType.Namespace + collectionType.Name;
-            Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
-            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
-            if (Api.TryMoveFirst(session, table))
-            {
-                do
-                {
-                    var a = typeof (Document<>).MakeGenericType(collectionType);
-                    var newStrongDocument = (Document)Activator.CreateInstance(a);
-                    //newStrongDocument.Type = collectionType;
-                    populateDocument(newStrongDocument);
-                    listFound.Add(newStrongDocument);                    
-                }
-                while (Api.TryMoveNext(session, table));
-            }
-            return listFound;
-        }
-
-        // All of a certain Document Type
-        public IList All1(Type collectionType)
-        {
-            var documentType = collectionType;
-            var genericDocumentType = documentType.GetGenericArguments()[0];
-            var listFoundType = typeof(List<>).MakeGenericType(documentType);
+            var genericDocumentType = typeof (Document<>).MakeGenericType(collectionType);
+            var listFoundType = typeof(List<>).MakeGenericType(genericDocumentType );
             var listFound = (IList)Activator.CreateInstance(listFoundType);
-
-            var collectionName = genericDocumentType.Namespace + genericDocumentType.Name;
+            var collectionName = collectionType.Namespace + collectionType.Name;
 
             Api.JetSetCurrentIndex(session, table, "by_collection_name");
             Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
@@ -172,7 +152,7 @@ namespace DocSharp.Storage
             {
                 do
                 {
-                    var a = typeof(Document<>).MakeGenericType(genericDocumentType);
+                    var a = typeof(Document<>).MakeGenericType(collectionType);
                     var newStrongDocument = (Document)Activator.CreateInstance(a);
                     populateDocument(newStrongDocument);
                     listFound.Add(newStrongDocument);
