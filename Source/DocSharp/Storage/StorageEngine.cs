@@ -15,6 +15,10 @@ namespace DocSharp.Storage
 
             instance = new Instance(pathToDatabase);
             instance.Parameters.CircularLog = true;
+            instance.Parameters.LogFileDirectory = Path.GetDirectoryName(pathToDatabase);
+            instance.Parameters.AlternateDatabaseRecoveryDirectory = Path.GetDirectoryName(pathToDatabase);
+            instance.Parameters.SystemDirectory = Path.GetDirectoryName(pathToDatabase);
+            instance.Parameters.TempDirectory = Path.GetDirectoryName(pathToDatabase);
             instance.Parameters.Recovery = true;
             instance.Init();
 

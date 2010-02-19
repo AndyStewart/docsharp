@@ -5,13 +5,16 @@ namespace DocSharp.Tests
 {
     public class BaseTest
     {
-        protected string DbName = "DocDb.esb";
+        protected const string DbDirectory = @".\TestDb\";
+        protected const string DbName = DbDirectory + @"DocDb.esb";
 
         [SetUp]
         public void SetUp()
         {
-            if (File.Exists(DbName))
-                File.Delete(DbName);
+            if (Directory.Exists(DbDirectory))
+                Directory.Delete(DbDirectory, true);
+
+            Directory.CreateDirectory(DbDirectory);
         }
     }
 }
