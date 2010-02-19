@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
 
@@ -137,8 +138,9 @@ namespace DocSharp.Storage
         /// Return all documents of a certain type
         /// </summary>
         /// <param name="collectionType"></param>
+        /// <param name="expression"></param>
         /// <returns></returns>
-        public IList All(Type collectionType)
+        public IList All(Type collectionType, UnaryExpression expression)
         {
             var genericDocumentType = typeof (Document<>).MakeGenericType(collectionType);
             var listFoundType = typeof(List<>).MakeGenericType(genericDocumentType );
@@ -154,8 +156,10 @@ namespace DocSharp.Storage
                 {
                     var a = typeof(Document<>).MakeGenericType(collectionType);
                     var newStrongDocument = (Document)Activator.CreateInstance(a);
+
                     populateDocument(newStrongDocument);
-                    listFound.Add(newStrongDocument);
+                    if ((bool)expression.Method.Invoke(newStrongDocument, null))
+                        listFound.Add(newStrongDocument);
                 }
                 while (Api.TryMoveNext(session, table));
             }

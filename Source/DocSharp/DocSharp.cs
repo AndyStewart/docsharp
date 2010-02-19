@@ -69,7 +69,7 @@ namespace DocSharp
             {
                 var indexFound = indexes.FirstOrDefault(q => q.AppliesTo(typeof(T)));
                 if (indexFound != null)
-                    return findByIndex((Index) indexFound, whereClause);
+                    return findByIndex(indexFound, whereClause);
 
                 return session.Query(whereClause.Compile());
             }

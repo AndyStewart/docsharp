@@ -36,7 +36,12 @@ namespace DocSharp.Linq
             {
                 var documentType = typeof (TResult).GetGenericArguments()[0];
                 var collectionType = documentType.GetGenericArguments()[0];
-                return (TResult)session.All(collectionType);
+                var methodExpression = expression as MethodCallExpression;
+                var typeToFindExpression = methodExpression.Arguments[0] as ConstantExpression;
+                var lambdaExpression = methodExpression.Arguments[1] as UnaryExpression;
+                return (TResult)session.All(collectionType, lambdaExpression);
+
+                //return (TResult)session.All(collectionType, TODO);
             } 
         }
     }
