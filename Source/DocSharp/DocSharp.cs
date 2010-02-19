@@ -1,9 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using DocSharp.Linq;
 using DocSharp.Storage;
 
 namespace DocSharp
@@ -80,7 +80,8 @@ namespace DocSharp
             
             using (var session = storageEngine.CreateSession())
             {
-                return new DocumentQuery<T>(session);
+
+                return new DocumentQuery<Document<T>>(new DocumentQueryProvider());
             }
         }
 
@@ -122,69 +123,6 @@ namespace DocSharp
 
             if (memberExpression == null) throw new ArgumentException("Not a member access", "member");
             return memberExpression;
-        }
-    }
-
-    public class DocumentQuery<T> : IQueryable<Document<T>>
-    {
-        private DocumentQueryProvider provider;
-        private ConstantExpression expression;
-
-        public DocumentQuery(DocumentQueryProvider queryProvider)
-        {
-            provider = queryProvider;
-            expression = Expression.Constant(this);
-        }
-
-        public IEnumerator<Document<T>> GetEnumerator()
-        {
-            return ((IEnumerable<Document<T>>)provider.Execute(this.expression)).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public Expression Expression
-        {
-            get { return expression; }
-        }
-
-        public Type ElementType
-        {
-            get { return typeof(T); }
-        }
-
-        public IQueryProvider Provider
-        {
-            get { return provider; }
-        }
-    }
-
-    public class DocumentQueryProvider : IQueryProvider
-    {
-        private Expression expression;
-
-        public IQueryable CreateQuery(Expression expression)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
-        {
-            this.expression = expression;
-            return (IQueryable<TElement>) new DocumentQuery<Document<TElement>>(this);
-        }
-
-        public object Execute(Expression expression)
-        {
-            throw new NotImplementedException();
-        }
-
-        public TResult Execute<TResult>(Expression expression)
-        {
-            throw new NotImplementedException();
         }
     }
 }
