@@ -86,7 +86,7 @@ namespace DocSharp.Storage
         private void populateDocument(Document strongDocument)
         {
             strongDocument.Id = new Guid(Api.RetrieveColumnAsString(session, table, columnId));
-            strongDocument.Data = ObjectConverter.ToObject(Api.RetrieveColumnAsString(session, table, columnData), strongDocument.Type);
+            strongDocument.LooseData = ObjectConverter.ToObject(Api.RetrieveColumnAsString(session, table, columnData), strongDocument.Type);
         }
 
         private string getCollectionName<T>()
@@ -164,6 +164,34 @@ namespace DocSharp.Storage
                 while (Api.TryMoveNext(session, table));
             }
             return listFound;
+        }
+
+        public TResult Find<TResult>(Expression expression)
+        {
+            var methodExpression = expression as MethodCallExpression;
+            if (methodExpression.Method.Name == "First")
+            {
+                var collectionType = typeof (TResult).GetGenericArguments()[0];
+                var collectionName = collectionType.Namespace + collectionType.Name;
+
+                Api.JetSetCurrentIndex(session, table, "by_collection_name");
+                Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+                Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+                if (Api.TryMoveFirst(session, table))
+                {
+                    do
+                    {
+                        var newStrongDocument = (Document) Activator.CreateInstance(typeof (TResult));
+
+                        populateDocument(newStrongDocument);
+                        var unary = methodExpression.Arguments[1] as UnaryExpression;
+                        
+                    }
+                    while (Api.TryMoveNext(session, table));
+                }
+            }
+
+            return Activator.CreateInstance<TResult>();
         }
     }
 }

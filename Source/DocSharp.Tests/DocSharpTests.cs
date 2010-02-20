@@ -105,6 +105,27 @@ namespace DocSharp.Tests
         }
 
         [Test]
+        public void Should_Retrieve_all_objects_of_a_type()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "My Company 1" });
+                documentDb.Store(new Company { Name = "My Company 2" });
+                documentDb.Store(new Company { Name = "My Company 3" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
+            }
+            
+            using (var documentDb = new DocSharp(DbName))
+            {
+                var startTime = DateTime.Now;
+                Assert.AreEqual(documentDb.All<Company>().Count, 3);
+                Assert.AreEqual(documentDb.All<Contact>().Count, 2);
+                Console.WriteLine("Time - " + DateTime.Now.Subtract(startTime).TotalMilliseconds);
+            }
+        }
+
+        [Test]
         public void Test_Speed_of_look_up_by_id()
         {
             using (var documentDb = new DocSharp(DbName))

@@ -4,12 +4,27 @@ namespace DocSharp
 {
     public class Document<T> : Document
     {
-        public new T Data { get; set; }
-        public new Type Type
+        public  T Data
+        {
+            get
+            {
+                return (T)LooseData;
+            }
+            set
+            {
+                LooseData = value;
+            }
+        }
+
+        public override Type Type
         {
             get
             {
                 return typeof (T);
+            }
+            set
+            {
+                
             }
         }
     }
@@ -17,7 +32,7 @@ namespace DocSharp
     public class Document
     {
         public Guid Id { get; set; }
-        public object Data { get; set; }
-        public Type Type { get; set; }
+        public virtual object LooseData { get; set; }
+        public virtual Type Type { get; set; }
     }
 }
