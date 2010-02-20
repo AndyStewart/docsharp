@@ -119,8 +119,8 @@ namespace DocSharp.Tests
             using (var documentDb = new DocSharp(DbName))
             {
                 var startTime = DateTime.Now;
-                Assert.AreEqual(documentDb.All<Company>().Count, 3);
-                Assert.AreEqual(documentDb.All<Contact>().Count, 2);
+                Assert.AreEqual(documentDb.All<Company>().Count(), 3);
+                Assert.AreEqual(documentDb.All<Contact>().Count(), 2);
                 Console.WriteLine("Time - " + DateTime.Now.Subtract(startTime).TotalMilliseconds);
             }
         }

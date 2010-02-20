@@ -75,11 +75,11 @@ namespace DocSharp
             }
         }
 
-        public IList<Document<T>> All<T>()
+        public IQueryable<Document<T>> All<T>()
         {
             using (var session = storageEngine.CreateSession())
             {
-                return session.Query<T>(q => q != null);
+                return session.Query<T>(q => q != null).AsQueryable();
             }
         }
 
