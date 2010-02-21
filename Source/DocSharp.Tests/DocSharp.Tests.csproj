@@ -50,8 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
+    <Compile Include="Framework\CompanyMap.cs" />
+    <Compile Include="TestFixtures\Company.cs" />
+    <Compile Include="TestFixtures\Contact.cs" />
     <Compile Include="DocSharpTests.cs" />
     <Compile Include="DocumetQueryTests.cs" />
+    <Compile Include="Framework\DocumentStoreTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -59,9 +63,6 @@
       <Project>{7F644BCF-98DC-4E1D-8DE6-DBEFDB8E4F05}</Project>
       <Name>DocSharp</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TestFixtures\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

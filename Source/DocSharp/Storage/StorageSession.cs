@@ -120,7 +120,7 @@ namespace DocSharp.Storage
             var listFound = new List<Document<T>>();
             Api.JetSetCurrentIndex(session, table, "by_collection_name");
             Api.MakeKey(session, table, getCollectionName<T>(), Encoding.Unicode, MakeKeyGrbit.NewKey);
-            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            Api.TrySeek(session, table, SeekGrbit.SeekEQ);
             if (Api.TryMoveFirst(session, table))
             {
                 do

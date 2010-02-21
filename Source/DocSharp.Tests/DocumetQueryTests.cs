@@ -1,4 +1,5 @@
 using System.Linq;
+using DocSharp.Tests.TestFixtures;
 using NUnit.Framework;
 
 namespace DocSharp.Tests

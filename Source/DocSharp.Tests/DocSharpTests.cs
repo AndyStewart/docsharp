@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using DocSharp.Tests.TestFixtures;
 using NUnit.Framework;
 
 namespace DocSharp.Tests
@@ -245,21 +245,4 @@ namespace DocSharp.Tests
             }
         }
     }
-
-    public class Company
-    {
-        public string Name { get; set; }
-        public string Address1 { get; set; }
-        public string Address2 { get; set; }
-        public string Address3 { get; set; }
-        public List<Contact> Contacts { get; set; }
-    }
-
-    public class Contact
-    {
-        public string FirstName { get; set; }
-        public string Surname { get; set; }
-        public string Email { get; set; }
-    }
-
 }
