@@ -54,7 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Framework\DocumentMap.cs" />
-    <Compile Include="Framework\DocumentMapper.cs" />
+    <Compile Include="Framework\DocumentSession.cs" />
     <Compile Include="Framework\DocumentStore.cs" />
     <Compile Include="Framework\IMap.cs" />
     <Compile Include="Linq\DocumentQuery.cs" />

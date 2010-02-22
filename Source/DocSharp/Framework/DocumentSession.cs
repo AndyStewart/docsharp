@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace DocSharp.Framework
 {
-    public class DocumentMapper
+    public class DocumentSession
     {
         private readonly DocumentStore store;
         private DocSharp docSharp;
         private List<Document> entities = new List<Document>();
 
-        public DocumentMapper(DocumentStore store)
+        public DocumentSession(DocumentStore store)
         {
             this.store = store;
             docSharp= store.DocSharp;

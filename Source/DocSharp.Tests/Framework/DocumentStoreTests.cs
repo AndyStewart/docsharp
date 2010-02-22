@@ -18,7 +18,7 @@ namespace DocSharp.Tests.Framework
                 documentStore.AddMap(new CompanyMap());
                 var documentId = docSharp.Store(new Company { Name = "Company NAme"});
 
-                var mapper = new DocumentMapper(documentStore);
+                var mapper = new DocumentSession(documentStore);
                 var companyFound = mapper.Load<Company>(documentId.Id);
                 Assert.AreEqual(companyFound.Id, documentId.Id);
             }
@@ -35,7 +35,7 @@ namespace DocSharp.Tests.Framework
 
                 
 
-                var mapper = new DocumentMapper(documentStore);
+                var mapper = new DocumentSession(documentStore);
                 var company = new Company() { Name = "Company 1" };
                 mapper.Store(company);
                 Assert.AreNotEqual(Guid.Empty, company.Id);
@@ -52,7 +52,7 @@ namespace DocSharp.Tests.Framework
                 documentStore.AddMap(new CompanyMap());
 
 
-                var mapper = new DocumentMapper(documentStore);
+                var mapper = new DocumentSession(documentStore);
                 var company = new Company { Name = "Company 1" };
                 mapper.Store(company);
                 company.Name = "Company 2";
@@ -71,16 +71,17 @@ namespace DocSharp.Tests.Framework
                 documentStore.AddMap(new CompanyMap());
 
 
-                var mapper = new DocumentMapper(documentStore);
+                var session1 = documentStore.OpenSession();
                 var company = new Company {Name = "Company 1"};
-                mapper.Store(company);
+                session1.Store(company);
                 var companyId = company.Id;
 
-                var mapper2 = new DocumentMapper(documentStore);
-                var companyFound = mapper2.Load<Company>(companyId);
+                var session2 = documentStore.OpenSession();
+                var companyFound = session2.Load<Company>(companyId);
                 companyFound.Name = "New Name";
-                mapper.SaveChanges();
-                Assert.AreEqual("New Name", mapper.Load<Company>(companyId).Name);
+                session2.SaveChanges();
+
+                Assert.AreEqual("New Name", session2.Load<Company>(companyId).Name);
             }
         }
     }

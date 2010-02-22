@@ -35,6 +35,11 @@ namespace DocSharp.Framework
             }
             return null;
         }
+
+        public DocumentSession OpenSession()
+        {
+            return new DocumentSession(this);
+        }
     }
 
 }
