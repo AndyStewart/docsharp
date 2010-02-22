@@ -20,5 +20,12 @@ namespace DocSharp.Framework
             map.IdentityProperty.SetValue(documentFound.Data, documentFound.Id, null);
             return documentFound.Data;
         }
+
+        public void Store<T>(T company)
+        {
+            var documentStored = docSharp.Store(company);
+            var map = store.GetMap<T>();
+            map.IdentityProperty.SetValue(documentStored.Data, documentStored.Id, null);
+        }
     }
 }
