@@ -6,14 +6,14 @@ using DocSharp.Tests.Framework;
 
 namespace DocSharp.Framework
 {
-    public class DocumentStore
+    public class DocumentStore : IDisposable
     {
         public DocSharp DocSharp { get; set; }
         private List<DocumentMap> maps = new List<DocumentMap>();
 
-        public DocumentStore(DocSharp docSharp)
+        public DocumentStore()
         {
-            DocSharp = docSharp;
+            
         }
 
         public void AddMap<T>(IMap<T> map)
@@ -39,6 +39,16 @@ namespace DocSharp.Framework
         public DocumentSession OpenSession()
         {
             return new DocumentSession(this);
+        }
+
+        public void Dispose()
+        {
+            DocSharp.Dispose();
+        }
+
+        public void Initialise()
+        {
+            DocSharp = new DocSharp(Database);
         }
     }
 

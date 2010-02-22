@@ -11,12 +11,13 @@ namespace DocSharp.Tests.Framework
         [Test]
         public void Should_Load_entity_back_with_document_Id_mapped_to_Id()
         {
-            using (var docSharp = new DocSharp(DbName))
+            using (var documentStore = new DocumentStore())
             {
-                var documentStore = new DocumentStore(docSharp);
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
-                var documentId = docSharp.Store(new Company { Name = "Company NAme"});
+                documentStore.Initialise();
+
+                var documentId = documentStore.DocSharp.Store(new Company { Name = "Company NAme" });
 
                 var session = documentStore.OpenSession();
                 var companyFound = session.Load<Company>(documentId.Id);
@@ -27,11 +28,11 @@ namespace DocSharp.Tests.Framework
         [Test]
         public void Should_map_Entity_Id_to_document_during_store()
         {
-            using (var docSharp = new DocSharp(DbName))
+            using (var documentStore = new DocumentStore())
             {
-                var documentStore = new DocumentStore(docSharp);
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
+                documentStore.Initialise();
 
 
 
@@ -45,11 +46,11 @@ namespace DocSharp.Tests.Framework
         [Test]
         public void Should_update_stored_entity()
         {
-            using (var docSharp = new DocSharp(DbName))
+            using (var documentStore = new DocumentStore())
             {
-                var documentStore = new DocumentStore(docSharp);
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
+                documentStore.Initialise();
 
                 var session = documentStore.OpenSession();
                 var company = new Company { Name = "Company 1" };
@@ -63,11 +64,11 @@ namespace DocSharp.Tests.Framework
         [Test]
         public void Should_update_retrieved_entity()
         {
-            using (var docSharp = new DocSharp(DbName))
+            using (var documentStore = new DocumentStore())
             {
-                var documentStore = new DocumentStore(docSharp);
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
+                documentStore.Initialise();
 
 
                 var session1 = documentStore.OpenSession();

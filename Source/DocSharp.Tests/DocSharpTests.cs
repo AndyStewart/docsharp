@@ -22,7 +22,11 @@ namespace DocSharp.Tests
         public void Should_store_document()
         {
             var documentDb = new DocSharp(DbName);
+
+            documentDb.Store(new Company() { Name = "My Company 221 " });
+            
             var document = documentDb.Store(new Company() { Name = "My Company"});
+
             documentDb.Dispose();
 
             var db2 = new DocSharp(DbName);
@@ -126,6 +130,111 @@ namespace DocSharp.Tests
         }
 
         [Test]
+        public void Should_load_all_into_memory()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "My Company 1" });
+                documentDb.Store(new Company { Name = "My Company 2" });
+                documentDb.Store(new Company { Name = "My Company 3" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                Timer(() => documentDb.All<Company>().Count());
+                var numberOfCompaniesFound = 0;
+                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
+                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
+                Assert.AreEqual(3, numberOfCompaniesFound, "Should return correct result set");
+            }
+        }
+
+        [Test]
+        public void Should_keep_memory_cache_in_sync_when_new_document_added()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new Company { Name = "My Company 3 " + i });    
+                }
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                Timer(() => documentDb.All<Company>().Count());
+                var numberOfCompaniesFound = 0;
+                documentDb.Store(new Company { Name = "My Company 3" });
+                var timeTake1 = Timer(() => numberOfCompaniesFound  = documentDb.All<Company>().Count());
+
+                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
+                Assert.AreEqual(1001, numberOfCompaniesFound, "Should return correct result set");
+            }
+        }
+
+        [Test]
+        public void Should_keep_memory_cache_in_sync_when_document_updated()
+        {
+            Document<Company> doc;
+            using (var documentDb = new DocSharp(DbName))
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new Company { Name = "My Company 3 " + i });
+                }
+                doc = documentDb.Store(new Company { Name = "My Company 3" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                Timer(() => documentDb.All<Company>().Count());
+                var numberOfCompaniesFound = 0;
+                doc.Data.Name = "Company 2";
+                documentDb.Update(doc);
+
+                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
+
+                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
+                Assert.AreEqual("Company 2", documentDb.All<Company>().First(q => q.Id == doc.Id).Data.Name, "Should update company correctly");
+            }
+        }
+
+        [Test]
+        public void Should_keep_memory_cache_in_sync_when_document_deleted()
+        {
+            Document<Company> doc;
+            using (var documentDb = new DocSharp(DbName))
+            {
+                for (int i = 0; i < 1000; i++)
+                {
+                    documentDb.Store(new Company { Name = "My Company 3 " + i });
+                }
+                doc = documentDb.Store(new Company { Name = "My Company 3" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
+                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
+            }
+
+            using (var documentDb = new DocSharp(DbName))
+            {
+                Timer(() => documentDb.All<Company>().Count());
+                var numberOfCompaniesFound = 0;
+                doc.Data.Name = "Company 2";
+                documentDb.Delete(doc.Id);
+
+                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
+
+                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
+                Assert.AreEqual(1000, documentDb.All<Company>().Count(), "Should of removed deleted object from cache");
+            }
+        }
+
+        [Test]
         public void Test_Speed_of_look_up_by_id()
         {
             using (var documentDb = new DocSharp(DbName))
@@ -180,6 +289,9 @@ namespace DocSharp.Tests
                 {
                     documentDb.Store(new Company { Name = "Company Name " + i });
                 }
+
+                Timer(() => documentDb.Query<Company>(q => q.Name.Contains("World")));
+                Timer(() => documentDb.Query<Company>(q => q.Name.Contains("World")));
 
                 var startTime = DateTime.Now;
                 var documentsFound = documentDb.Query<Company>(q => q.Name.Contains("World"));

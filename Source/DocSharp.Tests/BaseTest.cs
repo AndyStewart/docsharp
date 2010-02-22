@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using NUnit.Framework;
 
@@ -15,6 +16,15 @@ namespace DocSharp.Tests
                 Directory.Delete(DbDirectory, true);
 
             Directory.CreateDirectory(DbDirectory);
+        }
+
+        public double Timer(Action action)
+        {
+            var startTime = DateTime.Now;
+            action.Invoke();
+            var timeTaken = DateTime.Now.Subtract(startTime);
+            Console.WriteLine("Time take (ms)- " + timeTaken.TotalMilliseconds);
+            return timeTaken.TotalMilliseconds;
         }
     }
 }
