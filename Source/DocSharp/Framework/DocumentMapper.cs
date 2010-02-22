@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace DocSharp.Framework
 {
@@ -6,6 +8,7 @@ namespace DocSharp.Framework
     {
         private readonly DocumentStore store;
         private DocSharp docSharp;
+        private List<Document> entities = new List<Document>();
 
         public DocumentMapper(DocumentStore store)
         {
@@ -18,14 +21,24 @@ namespace DocSharp.Framework
             var documentFound = docSharp.Load<T>(id);
             var map = store.GetMap<T>();
             map.IdentityProperty.SetValue(documentFound.Data, documentFound.Id, null);
+            entities.Add(documentFound);
             return documentFound.Data;
         }
 
         public void Store<T>(T company)
         {
             var documentStored = docSharp.Store(company);
+            entities.Add(documentStored);
             var map = store.GetMap<T>();
             map.IdentityProperty.SetValue(documentStored.Data, documentStored.Id, null);
+        }
+
+        public void SaveChanges()
+        {
+            foreach (var entity in entities)
+            {
+                docSharp.Update(entity);
+            }
         }
     }
 }

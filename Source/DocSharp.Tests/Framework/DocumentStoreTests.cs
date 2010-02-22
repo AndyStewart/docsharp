@@ -41,6 +41,56 @@ namespace DocSharp.Tests.Framework
                 Assert.AreNotEqual(Guid.Empty, company.Id);
             }
         }
-        
+
+        [Test]
+        public void Should_update_stored_entity()
+        {
+            using (var docSharp = new DocSharp(DbName))
+            {
+                var documentStore = new DocumentStore(docSharp);
+                documentStore.Database = DbName;
+                documentStore.AddMap(new CompanyMap());
+
+
+                var mapper = new DocumentMapper(documentStore);
+                var company = new Company { Name = "Company 1" };
+                mapper.Store(company);
+                company.Name = "Company 2";
+                mapper.SaveChanges();
+                Assert.AreEqual("Company 2", mapper.Load<Company>(company.Id).Name);
+            }
+        }
+
+        [Test]
+        public void Should_update_retrieved_entity()
+        {
+            Guid companyId;
+            using (var docSharp = new DocSharp(DbName))
+            {
+                var documentStore = new DocumentStore(docSharp);
+                documentStore.Database = DbName;
+                documentStore.AddMap(new CompanyMap());
+
+
+                var mapper = new DocumentMapper(documentStore);
+                var company = new Company {Name = "Company 1"};
+                mapper.Store(company);
+                companyId = company.Id;
+            }
+
+            using (var docSharp = new DocSharp(DbName))
+            {
+                var documentStore = new DocumentStore(docSharp);
+                documentStore.Database = DbName;
+                documentStore.AddMap(new CompanyMap());
+
+
+                var mapper = new DocumentMapper(documentStore);
+                var companyFound = mapper.Load<Company>(companyId);
+                companyFound.Name = "New Name";
+                mapper.SaveChanges();
+                Assert.AreEqual("New Name", mapper.Load<Company>(companyId).Name);
+            }
+        }
     }
 }

@@ -102,7 +102,7 @@ namespace DocSharp.Storage
             Api.JetDelete(session, table);
         }
 
-        public void Update<T>(Document<T> strongDocument)
+        public void Update(Document strongDocument)
         {
             Api.JetSetCurrentIndex(session, table, null);
             Api.MakeKey(session, table, strongDocument.Id.ToString(), Encoding.Unicode, MakeKeyGrbit.NewKey);
@@ -110,7 +110,7 @@ namespace DocSharp.Storage
             using (var update = new Update(session, table, JET_prep.Replace))
             {
                 Api.SetColumn(session, table, columnId, strongDocument.Id.ToString(), Encoding.Unicode);
-                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(strongDocument.Data), Encoding.Unicode);
+                Api.SetColumn(session, table, columnData, ObjectConverter.ToJson(strongDocument.LooseData), Encoding.Unicode);
                 update.Save();
             }
         }

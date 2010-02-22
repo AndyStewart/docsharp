@@ -55,7 +55,7 @@ namespace DocSharp
             }
         }
 
-        public void Update<T>(Document<T> strongDocument)
+        public void Update(Document strongDocument)
         {
             using (var session = storageEngine.CreateSession())
             {
