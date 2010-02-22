@@ -18,8 +18,8 @@ namespace DocSharp.Tests.Framework
                 documentStore.AddMap(new CompanyMap());
                 var documentId = docSharp.Store(new Company { Name = "Company NAme"});
 
-                var mapper = new DocumentSession(documentStore);
-                var companyFound = mapper.Load<Company>(documentId.Id);
+                var session = documentStore.OpenSession();
+                var companyFound = session.Load<Company>(documentId.Id);
                 Assert.AreEqual(companyFound.Id, documentId.Id);
             }
         }
@@ -33,11 +33,11 @@ namespace DocSharp.Tests.Framework
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
 
-                
 
-                var mapper = new DocumentSession(documentStore);
+
+                var session = documentStore.OpenSession();
                 var company = new Company() { Name = "Company 1" };
-                mapper.Store(company);
+                session.Store(company);
                 Assert.AreNotEqual(Guid.Empty, company.Id);
             }
         }
@@ -51,13 +51,12 @@ namespace DocSharp.Tests.Framework
                 documentStore.Database = DbName;
                 documentStore.AddMap(new CompanyMap());
 
-
-                var mapper = new DocumentSession(documentStore);
+                var session = documentStore.OpenSession();
                 var company = new Company { Name = "Company 1" };
-                mapper.Store(company);
+                session.Store(company);
                 company.Name = "Company 2";
-                mapper.SaveChanges();
-                Assert.AreEqual("Company 2", mapper.Load<Company>(company.Id).Name);
+                session.SaveChanges();
+                Assert.AreEqual("Company 2", session.Load<Company>(company.Id).Name);
             }
         }
 
