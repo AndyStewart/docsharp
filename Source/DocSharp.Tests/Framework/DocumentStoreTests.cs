@@ -64,7 +64,6 @@ namespace DocSharp.Tests.Framework
         [Test]
         public void Should_update_retrieved_entity()
         {
-            Guid companyId;
             using (var docSharp = new DocSharp(DbName))
             {
                 var documentStore = new DocumentStore(docSharp);
@@ -75,18 +74,10 @@ namespace DocSharp.Tests.Framework
                 var mapper = new DocumentMapper(documentStore);
                 var company = new Company {Name = "Company 1"};
                 mapper.Store(company);
-                companyId = company.Id;
-            }
+                var companyId = company.Id;
 
-            using (var docSharp = new DocSharp(DbName))
-            {
-                var documentStore = new DocumentStore(docSharp);
-                documentStore.Database = DbName;
-                documentStore.AddMap(new CompanyMap());
-
-
-                var mapper = new DocumentMapper(documentStore);
-                var companyFound = mapper.Load<Company>(companyId);
+                var mapper2 = new DocumentMapper(documentStore);
+                var companyFound = mapper2.Load<Company>(companyId);
                 companyFound.Name = "New Name";
                 mapper.SaveChanges();
                 Assert.AreEqual("New Name", mapper.Load<Company>(companyId).Name);
