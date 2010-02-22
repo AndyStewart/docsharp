@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using DocSharp.Tests.TestFixtures;
 using NUnit.Framework;
 
@@ -129,7 +128,7 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test]
+        [Test()] // Not sure if loading all into memory is a good idea or not - but increases perf massively
         public void Should_load_all_into_memory()
         {
             using (var documentDb = new DocSharp(DbName))
@@ -151,7 +150,7 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test]
+        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
         public void Should_keep_memory_cache_in_sync_when_new_document_added()
         {
             using (var documentDb = new DocSharp(DbName))
@@ -176,7 +175,7 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test]
+        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
         public void Should_keep_memory_cache_in_sync_when_document_updated()
         {
             Document<Company> doc;
@@ -205,7 +204,7 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test]
+        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
         public void Should_keep_memory_cache_in_sync_when_document_deleted()
         {
             Document<Company> doc;
