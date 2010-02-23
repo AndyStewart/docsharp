@@ -29,11 +29,6 @@ namespace DocSharp
             using (var session = storageEngine.CreateSession())
             {
                 session.Insert(document);
-                if (queryCache.ContainsKey((typeof(T))))
-                {
-                    var list = queryCache[typeof (T)];
-                    list.Add(document);
-                }
                 var indexFound = indexes.FirstOrDefault(q => q.AppliesTo(typeof(T)));
                 if (indexFound != null)
                 {
@@ -56,20 +51,6 @@ namespace DocSharp
         {
             using (var session = storageEngine.CreateSession())
             {
-                foreach (KeyValuePair<Type, IList> listCache in queryCache)
-                {
-                    Document docFound = null;
-                    var list = listCache.Value;
-                    foreach(Document document in list)
-                    {
-                        if (document.Id == id)
-                            docFound = document;
-                    }
-
-                    if (docFound != null)
-                        list.Remove(docFound);
-                }
-
                 session.Delete(id);
             }
         }
@@ -79,16 +60,6 @@ namespace DocSharp
             using (var session = storageEngine.CreateSession())
             {
                 session.Update(strongDocument);
-                if (queryCache.ContainsKey(strongDocument.Type))
-                {
-                    var cache = queryCache[strongDocument.Type];
-                    foreach (Document doc in cache)
-                    {
-                        if (doc.Id == strongDocument.Id)
-                            doc.LooseData = strongDocument.LooseData;
-                    }
-                    cache.Add(strongDocument);
-                }
             }
         }
 
@@ -104,16 +75,12 @@ namespace DocSharp
             }
         }
 
-        Dictionary<Type,IList> queryCache = new Dictionary<Type, IList>();
         public IQueryable<Document<T>> All<T>()
         {
             using (var session = storageEngine.CreateSession())
             {
-                if (queryCache.ContainsKey(typeof(T)))
-                    return (IQueryable<Document<T>>) queryCache[typeof (T)].AsQueryable();
                 
                 var resultOfQuery = session.Query<T>(q => q != null);
-                queryCache.Add(typeof(T), (IList) resultOfQuery);
                 return resultOfQuery.AsQueryable();
             }
         }

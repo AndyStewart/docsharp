@@ -1,4 +1,6 @@
 using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using DocSharp.Tests.TestFixtures;
@@ -9,6 +11,39 @@ namespace DocSharp.Tests
     [TestFixture]
     public class DocSharpTests : BaseTest
     {
+        [Test]
+        public void Import_Paf_File()
+        {
+
+            var sqlCOnnection = new SqlConnection(@"Data Source=.\sql2005;Initial Catalog=PAF;Integrated Security=True");
+            sqlCOnnection.Open();
+            var command = new SqlCommand("Select FullPostcode, SingleLineAddress FROM ExpandedAddress", sqlCOnnection);
+            var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
+            while (reader.Read())
+            {
+                using (var documentDb2 = new DocSharp(DbName))
+                {
+                    var document = new Document<Address>();
+                    document.Data = new Address()
+                                        {
+                                            SingleLineAddress = (string) reader["SingleLineAddress"],
+                                            PostCode = (string) reader["FullPostcode"]
+                                        };
+                    documentDb2.Store(document);
+                }
+            }
+            reader.Close();
+
+            using (var documentDb2 = new DocSharp(DbName))
+            {
+                var docFound = new Document<Address>();
+                Timer(() => docFound = documentDb2.All<Address>().First(q => q.Data.PostCode == "CH46 6HU"));
+                Timer(() => docFound = documentDb2.All<Address>().First(q => q.Data.PostCode == "CH46 6HU"));
+                Console.Write(docFound.Data.SingleLineAddress);
+            }
+
+    }
+
         [Test]
         public void Should_Create_document_db()
         {
@@ -355,5 +390,12 @@ namespace DocSharp.Tests
                 Console.WriteLine(DateTime.Now.Subtract(startTime).ToString());
             }
         }
+    }
+
+    public class Address
+    {
+        public string SingleLineAddress { get; set; }
+
+        public string PostCode { get; set; }
     }
 }
