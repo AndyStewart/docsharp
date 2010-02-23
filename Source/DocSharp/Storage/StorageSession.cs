@@ -175,14 +175,20 @@ namespace DocSharp.Storage
             {
                 var collectionType = typeof (TResult).GetGenericArguments()[0];
                 var collectionName = collectionType.Namespace + collectionType.Name;
-                scanCollection(collectionName, () =>
-                                                   {
-                                                       var newStrongDocument = (Document) Activator.CreateInstance(typeof (TResult));
-                                                       populateDocument(newStrongDocument);
-                                                       if (ExpressionAnalyser.Matches(expression, newStrongDocument))
-                                                           return (TResult) (object) newStrongDocument;
-                                                   });
-                
+                Api.JetSetCurrentIndex(session, table, "by_collection_name");
+                Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+                Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+                if (Api.TryMoveFirst(session, table))
+                {
+                    do
+                    {
+                        var newStrongDocument = (Document)Activator.CreateInstance(typeof(TResult));
+                        populateDocument(newStrongDocument);
+                        if (ExpressionAnalyser.Matches(expression, newStrongDocument))
+                            return (TResult)(object)newStrongDocument;
+                    }
+                    while (Api.TryMoveNext(session, table));
+                }
             }
 
             if (methodExpression.Method.Name == "Where")
@@ -212,21 +218,6 @@ namespace DocSharp.Storage
             }
 
             return Activator.CreateInstance<TResult>();
-        }
-
-        private void scanCollection(string collectionName, Action func)
-        {
-            Api.JetSetCurrentIndex(session, table, "by_collection_name");
-            Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
-            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
-            if (Api.TryMoveFirst(session, table))
-            {
-                do
-                {
-                    func.Invoke();
-                }
-                while (Api.TryMoveNext(session, table));
-            }
         }
     }
 }

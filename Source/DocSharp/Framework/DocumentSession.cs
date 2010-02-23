@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DocSharp.Framework
 {
@@ -39,6 +40,19 @@ namespace DocSharp.Framework
             {
                 docSharp.Update(entity);
             }
+        }
+
+        public IList<T> GetAll<T>()
+        {
+            var documents = store.DocSharp.All<T>();
+            var list = new List<T>();
+            foreach (var document in documents)
+            {
+                var map = store.GetMap<T>();
+                map.IdentityProperty.SetValue(document.Data, document.Id, null);
+                list.Add(document.Data);
+            }
+            return list;
         }
     }
 }
