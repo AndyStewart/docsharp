@@ -45,5 +45,18 @@ namespace DocSharp.Storage
         {
             return new StorageSession(instance, _pathToDatabase);
         }
+
+        ~StorageEngine()
+        {
+            try
+            {
+                GC.SuppressFinalize(this);
+                instance.Close();
+                instance.Dispose();
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 }
