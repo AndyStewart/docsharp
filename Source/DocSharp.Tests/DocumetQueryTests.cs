@@ -30,5 +30,18 @@ namespace DocSharp.Tests
                 Assert.AreEqual(insertedDoc.Id, result.Id);
             }
         }
+
+        [Test]
+        public void Should_return_list_of_companies()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "Company Name ", Phone = 123 });
+                documentDb.Store(new Company { Name = "Company Name " });
+                documentDb.Store(new Company { Name = "Company Name " });
+                var result = documentDb.Query<Company>().Where(q => q.Data.Name == "Company Name ").ToList();
+                Assert.AreEqual(result.Count, 3);
+            }
+        }
     }
 }

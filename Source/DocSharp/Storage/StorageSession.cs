@@ -199,6 +199,39 @@ namespace DocSharp.Storage
                 }
             }
 
+            if (methodExpression.Method.Name == "Where")
+            {
+                var collectionType = typeof(TResult).GetGenericArguments()[0];
+                var collectionTypeType = typeof (List<>).MakeGenericType(collectionType);
+                var collection = (IList) Activator.CreateInstance(collectionTypeType);
+
+                var collectionName = collectionType.GetGenericArguments()[0].Namespace + collectionType.GetGenericArguments()[0].Name;
+
+                Api.JetSetCurrentIndex(session, table, "by_collection_name");
+                Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+                Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+                if (Api.TryMoveFirst(session, table))
+                {
+                    do
+                    {
+                        var newStrongDocument = (Document)Activator.CreateInstance(collectionType);
+
+                        populateDocument(newStrongDocument);
+                        var unary = methodExpression.Arguments[1] as UnaryExpression;
+                        var lambdaExpression = unary.Operand as LambdaExpression;
+                        var binary = lambdaExpression.Body as BinaryExpression;
+                        var a = binary.Left as MemberExpression;
+                        var member = a.Member as PropertyInfo;
+                        var objectValue = member.GetValue(newStrongDocument.LooseData, null);
+                        var b = binary.Right as ConstantExpression;
+                        if (b.Value.Equals(objectValue))
+                            collection.Add(newStrongDocument);
+                    }
+                    while (Api.TryMoveNext(session, table));
+                    return (TResult) collection;
+                }
+            }
+
             return Activator.CreateInstance<TResult>();
         }
     }
