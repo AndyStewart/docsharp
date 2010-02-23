@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using DocSharp.Linq;
 using Microsoft.Isam.Esent.Interop;
 
 namespace DocSharp.Storage
@@ -183,16 +184,8 @@ namespace DocSharp.Storage
                     do
                     {
                         var newStrongDocument = (Document) Activator.CreateInstance(typeof (TResult));
-
                         populateDocument(newStrongDocument);
-                        var unary = methodExpression.Arguments[1] as UnaryExpression;
-                        var lambdaExpression = unary.Operand as LambdaExpression;
-                        var binary = lambdaExpression.Body as BinaryExpression;
-                        var a = binary.Left as MemberExpression;
-                        var member = a.Member as PropertyInfo;
-                        var objectValue = member.GetValue(newStrongDocument.LooseData, null);
-                        var b = binary.Right as ConstantExpression;
-                        if (b.Value.Equals(objectValue))
+                        if (ExpressionAnalyser.Matches(expression, newStrongDocument))
                             return (TResult)(object)newStrongDocument;
                     }
                     while (Api.TryMoveNext(session, table));
@@ -214,17 +207,10 @@ namespace DocSharp.Storage
                 {
                     do
                     {
-                        var newStrongDocument = (Document)Activator.CreateInstance(collectionType);
+                        var newStrongDocument = (Document)Activator.CreateInstance(collectionType );
 
                         populateDocument(newStrongDocument);
-                        var unary = methodExpression.Arguments[1] as UnaryExpression;
-                        var lambdaExpression = unary.Operand as LambdaExpression;
-                        var binary = lambdaExpression.Body as BinaryExpression;
-                        var a = binary.Left as MemberExpression;
-                        var member = a.Member as PropertyInfo;
-                        var objectValue = member.GetValue(newStrongDocument.LooseData, null);
-                        var b = binary.Right as ConstantExpression;
-                        if (b.Value.Equals(objectValue))
+                        if (ExpressionAnalyser.Matches(expression, newStrongDocument))
                             collection.Add(newStrongDocument);
                     }
                     while (Api.TryMoveNext(session, table));

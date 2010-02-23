@@ -60,6 +60,7 @@
     <Compile Include="Linq\DocumentQuery.cs" />
     <Compile Include="Linq\DocumentQueryProvider.cs" />
     <Compile Include="Index.cs" />
+    <Compile Include="Linq\ExpressionAnalyser.cs" />
     <Compile Include="Storage\DatabaseSchema.cs" />
     <Compile Include="DocSharp.cs" />
     <Compile Include="StrongDocument.cs" />
