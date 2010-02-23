@@ -16,7 +16,7 @@ namespace DocSharp.Storage
             instance = new Instance(pathToDatabase);
             instance.Parameters.LogBuffers = 8192;
             instance.Parameters.MaxVerPages = 8192;
-            //instance.Parameters.LogFileSize= 16192;
+            instance.Parameters.LogFileSize= 16192;
             instance.Parameters.CircularLog = true;
             instance.Parameters.LogFileDirectory = Path.GetDirectoryName(pathToDatabase);
             instance.Parameters.AlternateDatabaseRecoveryDirectory = Path.GetDirectoryName(pathToDatabase);

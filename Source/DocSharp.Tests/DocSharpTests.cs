@@ -14,34 +14,38 @@ namespace DocSharp.Tests
         [Test]
         public void Import_Paf_File()
         {
-
             var sqlCOnnection = new SqlConnection(@"Data Source=.\sql2005;Initial Catalog=PAF;Integrated Security=True");
             sqlCOnnection.Open();
-            var command = new SqlCommand("Select FullPostcode, SingleLineAddress FROM ExpandedAddress", sqlCOnnection);
+            var command = new SqlCommand("Select Top 1000000 FullPostcode, SingleLineAddress FROM ExpandedAddress", sqlCOnnection);
             var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-            while (reader.Read())
-            {
+            var count = 0;
+                
                 using (var documentDb2 = new DocSharp(DbName))
                 {
-                    var document = new Document<Address>();
-                    document.Data = new Address()
-                                        {
-                                            SingleLineAddress = (string) reader["SingleLineAddress"],
-                                            PostCode = (string) reader["FullPostcode"]
-                                        };
-                    documentDb2.Store(document);
+                    while (reader.Read())
+                    {
+                        Console.WriteLine(count);
+
+                        var address = new Address()
+                                            {
+                                                SingleLineAddress = (string) reader["SingleLineAddress"],
+                                                PostCode = (string) reader["FullPostcode"]
+                                            };
+                        documentDb2.Store(address);
+                        count++;
+                    }
                 }
-            }
             reader.Close();
 
             using (var documentDb2 = new DocSharp(DbName))
             {
                 var docFound = new Document<Address>();
+                Console.WriteLine(documentDb2.All<Address>().Count());
+                Timer(() => docFound = documentDb2.All<Address>().First(q => q.Data.PostCode == "CH46 6HU"));
                 Timer(() => docFound = documentDb2.All<Address>().First(q => q.Data.PostCode == "CH46 6HU"));
                 Timer(() => docFound = documentDb2.All<Address>().First(q => q.Data.PostCode == "CH46 6HU"));
                 Console.Write(docFound.Data.SingleLineAddress);
             }
-
     }
 
         [Test]
@@ -163,110 +167,6 @@ namespace DocSharp.Tests
             }
         }
 
-        [Test()] // Not sure if loading all into memory is a good idea or not - but increases perf massively
-        public void Should_load_all_into_memory()
-        {
-            using (var documentDb = new DocSharp(DbName))
-            {
-                documentDb.Store(new Company { Name = "My Company 1" });
-                documentDb.Store(new Company { Name = "My Company 2" });
-                documentDb.Store(new Company { Name = "My Company 3" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
-            }
-
-            using (var documentDb = new DocSharp(DbName))
-            {
-                Timer(() => documentDb.All<Company>().Count());
-                var numberOfCompaniesFound = 0;
-                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
-                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
-                Assert.AreEqual(3, numberOfCompaniesFound, "Should return correct result set");
-            }
-        }
-
-        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
-        public void Should_keep_memory_cache_in_sync_when_new_document_added()
-        {
-            using (var documentDb = new DocSharp(DbName))
-            {
-                for (int i = 0; i < 1000; i++)
-                {
-                    documentDb.Store(new Company { Name = "My Company 3 " + i });    
-                }
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
-            }
-
-            using (var documentDb = new DocSharp(DbName))
-            {
-                Timer(() => documentDb.All<Company>().Count());
-                var numberOfCompaniesFound = 0;
-                documentDb.Store(new Company { Name = "My Company 3" });
-                var timeTake1 = Timer(() => numberOfCompaniesFound  = documentDb.All<Company>().Count());
-
-                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
-                Assert.AreEqual(1001, numberOfCompaniesFound, "Should return correct result set");
-            }
-        }
-
-        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
-        public void Should_keep_memory_cache_in_sync_when_document_updated()
-        {
-            Document<Company> doc;
-            using (var documentDb = new DocSharp(DbName))
-            {
-                for (int i = 0; i < 1000; i++)
-                {
-                    documentDb.Store(new Company { Name = "My Company 3 " + i });
-                }
-                doc = documentDb.Store(new Company { Name = "My Company 3" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
-            }
-
-            using (var documentDb = new DocSharp(DbName))
-            {
-                Timer(() => documentDb.All<Company>().Count());
-                var numberOfCompaniesFound = 0;
-                doc.Data.Name = "Company 2";
-                documentDb.Update(doc);
-
-                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
-
-                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
-                Assert.AreEqual("Company 2", documentDb.All<Company>().First(q => q.Id == doc.Id).Data.Name, "Should update company correctly");
-            }
-        }
-
-        [Test] // Not sure if loading all into memory is a good idea or not - but increases perf massively
-        public void Should_keep_memory_cache_in_sync_when_document_deleted()
-        {
-            Document<Company> doc;
-            using (var documentDb = new DocSharp(DbName))
-            {
-                for (int i = 0; i < 1000; i++)
-                {
-                    documentDb.Store(new Company { Name = "My Company 3 " + i });
-                }
-                doc = documentDb.Store(new Company { Name = "My Company 3" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith" });
-                documentDb.Store(new Contact { FirstName = "Bob", Surname = "Smith2" });
-            }
-
-            using (var documentDb = new DocSharp(DbName))
-            {
-                Timer(() => documentDb.All<Company>().Count());
-                var numberOfCompaniesFound = 0;
-                doc.Data.Name = "Company 2";
-                documentDb.Delete(doc.Id);
-
-                var timeTake1 = Timer(() => numberOfCompaniesFound = documentDb.All<Company>().Count());
-
-                Assert.IsTrue(timeTake1 < 50, "Second Query should be from memory");
-                Assert.AreEqual(1000, documentDb.All<Company>().Count(), "Should of removed deleted object from cache");
-            }
-        }
 
         [Test]
         public void Test_Speed_of_look_up_by_id()
@@ -291,6 +191,21 @@ namespace DocSharp.Tests
                 Console.WriteLine("Load by Id Time - " + DateTime.Now.Subtract(startTime));
                 Assert.AreEqual(documentsFound.Data.FirstName, "Andrew N");
                 Assert.IsTrue(timeQueryTaken.TotalMilliseconds <= 500);
+            }
+        }
+
+        [Test]
+        public void Test_speed_of_insert()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                Timer(() =>
+                          {
+                              for (int i = 0; i < 1000; i++)
+                              {
+                                  documentDb.Store(new Company {Name = "Company Name " + i});
+                              }
+                          });
             }
         }
 

@@ -11,5 +11,6 @@ namespace DocSharp.Tests.TestFixtures
         public string Address2 { get; set; }
         public string Address3 { get; set; }
         public List<Contact> Contacts { get; set; }
+        public int Phone { get; set; }
     }
 }

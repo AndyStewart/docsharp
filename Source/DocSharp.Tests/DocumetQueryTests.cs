@@ -8,13 +8,25 @@ namespace DocSharp.Tests
     public class DocumetQueryTests : BaseTest
     {
         [Test]
-        public void Should_return_first_result()
+        public void Should_return_first_result_with_string()
         {
             using (var documentDb = new DocSharp(DbName))
             {
                 var insertedDoc = documentDb.Store(new Company { Name = "Company Name " });
-                documentDb.Store(new Company { Name = "Company Name " });
-                var result = documentDb.Query<Company>().First(q => q.Data.Name == "Company Name");
+                documentDb.Store(new Company { Name = "Company Name" });
+                var result = documentDb.Query<Company>().First(q => q.Data.Name == "Company Name ");
+                Assert.AreEqual(insertedDoc.Id, result.Id);
+            }
+        }
+
+        [Test]
+        public void Should_return_first_result_with_number()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                var insertedDoc = documentDb.Store(new Company { Name = "Company Name ", Phone= 123 });
+                documentDb.Store(new Company { Name = "Company Name" });
+                var result = documentDb.Query<Company>().First(q => q.Data.Phone == 123);
                 Assert.AreEqual(insertedDoc.Id, result.Id);
             }
         }

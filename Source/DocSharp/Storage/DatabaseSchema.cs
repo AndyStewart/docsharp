@@ -16,8 +16,9 @@ namespace DocSharp.Storage
                     Api.JetCreateTable(session, dbid, "Documents", 16, 100, out tableid);
                     CreateDocumentsTable(session, tableid);
                     Api.JetCloseTable(session, tableid);
-                    transaction.Commit(CommitTransactionGrbit.LazyFlush);
+                    transaction.Commit(CommitTransactionGrbit.None);
                 }
+                Api.JetCloseDatabase(session, dbid, CloseDatabaseGrbit.None);
             }
         }
 
