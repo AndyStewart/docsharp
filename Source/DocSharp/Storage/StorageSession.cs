@@ -250,8 +250,7 @@ namespace DocSharp.Storage
                     return (TResult)(object)true;
                 }
             }
-
-            return (TResult)(object)null;
+            throw new NotImplementedException(methodExpression.Method.Name + " not yet supported");
         }
     }
 }
