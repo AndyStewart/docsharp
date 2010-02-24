@@ -80,5 +80,29 @@ namespace DocSharp.Tests
                 Assert.IsTrue(documentDb.Query<Company>().Any(q => q.Data.Name == "Company Name "));
             }
         }
+
+        [Test]
+        public void Shouldnt_find_all_entites_that_match_any_query()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "Company Name ", Phone = 123 });
+                documentDb.Store(new Company { Name = "Company Name " });
+                documentDb.Store(new Company { Name = "Company Name " });
+                Assert.IsFalse(documentDb.Query<Company>().All(q => q.Data.Name == "Funky Dood"));
+            }
+        }
+
+        [Test]
+        public void Should_find_all_entites_that_match_any_query()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "Company Name ", Phone = 123 });
+                documentDb.Store(new Company { Name = "Company Name " });
+                documentDb.Store(new Company { Name = "Company Name " });
+                Assert.IsTrue(documentDb.Query<Company>().All(q => q.Data.Name == "Company Name "));
+            }
+        }
     }
 }

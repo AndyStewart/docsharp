@@ -237,6 +237,18 @@ namespace DocSharp.Storage
                     while (Api.TryMoveNext(session, table));
                     return (TResult)(object)false;
                 }
+                if (methodExpression.Method.Name == "All")
+                {
+                    do
+                    {
+                        var newStrongDocument = (Document)Activator.CreateInstance(queryType);
+                        populateDocument(newStrongDocument);
+                        if (!ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                            return (TResult)(object)false;
+                    }
+                    while (Api.TryMoveNext(session, table));
+                    return (TResult)(object)true;
+                }
             }
 
             return (TResult)(object)null;
