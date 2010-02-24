@@ -148,5 +148,34 @@ namespace DocSharp.Tests.Linq
             Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("123H");
             Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
         }
+
+        [Test]
+        public void Should_match_double_conditions_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("H") && q.Data.Phone == 5;
+            Assert.True(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
+        }
+
+        [Test]
+        public void Shouldnt_match_double_conditions_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("H") && q.Data.Phone < 5;
+            Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
+        }
+
+        [Test]
+        public void Should_match_triple_conditions_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("H") && q.Data.Address2.Contains("R") && q.Data.Phone == 5;
+            Assert.IsTrue(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Address2 = "Road",  Phone = 5 } }));
+        }
+
+        [Test]
+        public void Shouldnt_match_triple_conditions_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("1") && q.Data.Address2.Contains("R") && q.Data.Phone == 5;
+            Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Address2 = "Road", Phone = 5 } }));
+        }
+
     }
 }
