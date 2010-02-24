@@ -8,7 +8,7 @@ namespace DocSharp.Linq
     {
         public static bool Matches(Expression expression, Document document)
         {
-            var unary = (expression as MethodCallExpression).Arguments[1] as UnaryExpression;
+            var unary = (expression as UnaryExpression);
             var lambdaExpression = unary.Operand as LambdaExpression;
             var binary = lambdaExpression.Body as BinaryExpression;
             var left = binary.Left as MemberExpression;

@@ -43,5 +43,18 @@ namespace DocSharp.Tests
                 Assert.AreEqual(result.Count, 3);
             }
         }
+
+        [Test]
+        public void Should_return_count_of_companies()
+        {
+            using (var documentDb = new DocSharp(DbName))
+            {
+                documentDb.Store(new Company { Name = "Company Name ", Phone = 123 });
+                documentDb.Store(new Company { Name = "Company Name " });
+                documentDb.Store(new Company { Name = "Company Name " });
+                var result = documentDb.Query<Company>().Count(q => q.Data.Name == "Company Name ");
+                Assert.AreEqual(result, 3);
+            }
+        }
     }
 }

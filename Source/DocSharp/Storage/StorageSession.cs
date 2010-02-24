@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -171,53 +172,60 @@ namespace DocSharp.Storage
         public TResult Find<TResult>(Expression expression)
         {
             var methodExpression = expression as MethodCallExpression;
-            if (methodExpression.Method.Name == "First")
+            var expressionType = methodExpression.Arguments[0] as ConstantExpression;
+            var queryable = expressionType.Value as IQueryable;
+            Type queryType = queryable.ElementType;
+            var collectionName = queryType.GetGenericArguments()[0].Namespace + queryType.GetGenericArguments()[0].Name;
+
+            Api.JetSetCurrentIndex(session, table, "by_collection_name");
+            Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
+            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            if (Api.TryMoveFirst(session, table))
             {
-                var collectionType = typeof (TResult).GetGenericArguments()[0];
-                var collectionName = collectionType.Namespace + collectionType.Name;
-                Api.JetSetCurrentIndex(session, table, "by_collection_name");
-                Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
-                Api.JetSeek(session, table, SeekGrbit.SeekEQ);
-                if (Api.TryMoveFirst(session, table))
+
+                if (methodExpression.Method.Name == "First")
                 {
                     do
                     {
-                        var newStrongDocument = (Document)Activator.CreateInstance(typeof(TResult));
+                        var newStrongDocument = (Document) Activator.CreateInstance(typeof (TResult));
                         populateDocument(newStrongDocument);
-                        if (ExpressionAnalyser.Matches(expression, newStrongDocument))
-                            return (TResult)(object)newStrongDocument;
-                    }
-                    while (Api.TryMoveNext(session, table));
+
+                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                            return (TResult) (object) newStrongDocument;
+
+                    } while (Api.TryMoveNext(session, table));
                 }
-            }
-
-            if (methodExpression.Method.Name == "Where")
-            {
-                var collectionType = typeof(TResult).GetGenericArguments()[0];
-                var collectionTypeType = typeof (List<>).MakeGenericType(collectionType);
-                var collection = (IList) Activator.CreateInstance(collectionTypeType);
-
-                var collectionName = collectionType.GetGenericArguments()[0].Namespace + collectionType.GetGenericArguments()[0].Name;
-
-                Api.JetSetCurrentIndex(session, table, "by_collection_name");
-                Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
-                Api.JetSeek(session, table, SeekGrbit.SeekEQ);
-                if (Api.TryMoveFirst(session, table))
+                if (methodExpression.Method.Name == "Where")
                 {
+                    var collectionTypeType = typeof(List<>).MakeGenericType(queryType);
+                    var collection = (IList)Activator.CreateInstance(collectionTypeType);
                     do
                     {
-                        var newStrongDocument = (Document)Activator.CreateInstance(collectionType );
-
+                        var newStrongDocument = (Document)Activator.CreateInstance(queryType);
                         populateDocument(newStrongDocument);
-                        if (ExpressionAnalyser.Matches(expression, newStrongDocument))
+                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
                             collection.Add(newStrongDocument);
                     }
                     while (Api.TryMoveNext(session, table));
-                    return (TResult) collection;
+                    return (TResult)collection;
+                }
+
+                if (methodExpression.Method.Name == "Count")
+                {
+                    int count = 0;
+                    do
+                    {
+                        var newStrongDocument = (Document)Activator.CreateInstance(queryType);
+                        populateDocument(newStrongDocument);
+                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                            count++;
+                    }
+                    while (Api.TryMoveNext(session, table));
+                    return (TResult)(object)count;
                 }
             }
 
-            return Activator.CreateInstance<TResult>();
+            return (TResult)(object)null;
         }
     }
 }
