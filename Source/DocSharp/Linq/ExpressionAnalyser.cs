@@ -1,4 +1,7 @@
 using System;
+using System.Collections;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -18,17 +21,32 @@ namespace DocSharp.Linq
             if (lambdaExpression != null)
             {
                 var binary = lambdaExpression.Body as BinaryExpression;
-                var leftValue = getValue(binary.Left, document);
-                var rightValue = getValue(binary.Right, document);
-                if (binary.NodeType == ExpressionType.LessThan)
-                    return Double.Parse(leftValue.ToString()) < Double.Parse(rightValue.ToString());
+                if (binary != null)
+                    return executeBinary(binary, document);
 
-                if (binary.NodeType == ExpressionType.GreaterThan)
-                    return Double.Parse(leftValue.ToString()) > Double.Parse(rightValue.ToString());
+                var methodCallExpression= lambdaExpression.Body as MethodCallExpression;
+                if (methodCallExpression!= null)
+                {
+                    var argumentValues = methodCallExpression.Arguments.Select(q => getValue(q, document)).ToArray();
+                    var value = getValue(methodCallExpression.Object, document);
+                    return (bool)methodCallExpression.Method.Invoke(value, argumentValues);
+                }
 
-                return rightValue.Equals(leftValue);
             }
             return false;
+        }
+
+        private static bool executeBinary(BinaryExpression binary, Document document)
+        {
+            var leftValue = getValue(binary.Left, document);
+            var rightValue = getValue(binary.Right, document);
+            if (binary.NodeType == ExpressionType.LessThan)
+                return Double.Parse(leftValue.ToString()) < Double.Parse(rightValue.ToString());
+
+            if (binary.NodeType == ExpressionType.GreaterThan)
+                return Double.Parse(leftValue.ToString()) > Double.Parse(rightValue.ToString());
+
+            return rightValue.Equals(leftValue);
         }
 
         private static object getValue(Expression expression, Document document)

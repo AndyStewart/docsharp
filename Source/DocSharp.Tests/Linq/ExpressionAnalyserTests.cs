@@ -134,5 +134,19 @@ namespace DocSharp.Tests.Linq
             Expression<Func<Document<Company>, bool>> expression = q => 1 > q.Data.Phone;
             Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
         }
+
+        [Test]
+        public void Should_match_method_call_expression()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("H");
+            Assert.IsTrue(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
+        }
+
+        [Test]
+        public void Shouldnt_match_method_call_expression()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("123H");
+            Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Phone = 5 } }));
+        }
     }
 }
