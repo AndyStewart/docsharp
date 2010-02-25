@@ -50,6 +50,9 @@ namespace DocSharp.Linq
             if (binary.NodeType == ExpressionType.GreaterThan)
                 return Double.Parse(leftValue.ToString()) > Double.Parse(rightValue.ToString());
 
+            if (binary.NodeType == ExpressionType.OrElse)
+                return (bool)leftValue || (bool)rightValue;
+
             return rightValue.Equals(leftValue);
         }
 

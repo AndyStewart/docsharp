@@ -177,5 +177,18 @@ namespace DocSharp.Tests.Linq
             Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Address2 = "Road", Phone = 5 } }));
         }
 
+        [Test]
+        public void Should_match_Or_statement_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("1") || q.Data.Phone == 5;
+            Assert.IsTrue(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Address2 = "Road", Phone = 5 } }));
+        }
+
+        [Test]
+        public void Shouldnt_match_Or_statement_in_expresion()
+        {
+            Expression<Func<Document<Company>, bool>> expression = q => q.Data.Address1.Contains("1") || q.Data.Address2.Contains("R") && q.Data.Phone == 6;
+            Assert.IsFalse(ExpressionAnalyser.Matches(expression, new Document<Company> { Data = new Company { Address1 = "Hello", Address2 = "Road", Phone = 5 } }));
+        }
     }
 }
