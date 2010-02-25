@@ -51,10 +51,11 @@
   <ItemGroup>
     <Compile Include="BaseTest.cs" />
     <Compile Include="Framework\CompanyMap.cs" />
+    <Compile Include="Linq\ExpressionAnalyserTests.cs" />
     <Compile Include="TestFixtures\Company.cs" />
     <Compile Include="TestFixtures\Contact.cs" />
     <Compile Include="DocSharpTests.cs" />
-    <Compile Include="DocumetQueryTests.cs" />
+    <Compile Include="Linq\DocumetQueryTests.cs" />
     <Compile Include="Framework\DocumentStoreTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -26,7 +26,6 @@ namespace DocSharp.Linq
         public IEnumerator<T> GetEnumerator()
         {
             return provider.Execute<IEnumerable<T>>(expression).GetEnumerator();
-            //return ((IEnumerable<T>)provider.Execute(expression)).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
