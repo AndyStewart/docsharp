@@ -54,5 +54,10 @@ namespace DocSharp.Framework
             }
             return list;
         }
+
+        public IQueryable<T> Query<T>()
+        {
+            throw new NotImplementedException("TODO");
+        }
     }
 }

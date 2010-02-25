@@ -179,7 +179,7 @@ namespace DocSharp.Storage
 
             Api.JetSetCurrentIndex(session, table, "by_collection_name");
             Api.MakeKey(session, table, collectionName, Encoding.Unicode, MakeKeyGrbit.NewKey);
-            Api.JetSeek(session, table, SeekGrbit.SeekEQ);
+            Api.TrySeek(session, table, SeekGrbit.SeekEQ);
             if (Api.TryMoveFirst(session, table))
             {
 
@@ -190,7 +190,7 @@ namespace DocSharp.Storage
                         var newStrongDocument = (Document) Activator.CreateInstance(typeof (TResult));
                         populateDocument(newStrongDocument);
 
-                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                        if (ExpressionAnalyser.Matches(methodExpression, newStrongDocument))
                             return (TResult) (object) newStrongDocument;
 
                     } while (Api.TryMoveNext(session, table));
@@ -203,7 +203,7 @@ namespace DocSharp.Storage
                     {
                         var newStrongDocument = (Document)Activator.CreateInstance(queryType);
                         populateDocument(newStrongDocument);
-                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                        if (ExpressionAnalyser.Matches(methodExpression, newStrongDocument))
                             collection.Add(newStrongDocument);
                     }
                     while (Api.TryMoveNext(session, table));
@@ -217,7 +217,7 @@ namespace DocSharp.Storage
                     {
                         var newStrongDocument = (Document)Activator.CreateInstance(queryType);
                         populateDocument(newStrongDocument);
-                        if (ExpressionAnalyser.Matches(methodExpression.Arguments[1], newStrongDocument))
+                        if (ExpressionAnalyser.Matches(methodExpression, newStrongDocument))
                             count++;
                     }
                     while (Api.TryMoveNext(session, table));
